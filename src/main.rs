@@ -12,6 +12,8 @@ use simulation::Simulation;
 const WIDTH: usize = 100;
 const HEIGHT: usize = 100;
 const LOGICAL_SCALE: usize = 5;
+const INDICATOR_SIZE: usize = 4;
+const BRUSH_SIZE: usize = 10;
 
 fn main() {
     let mut frame = Frame::new_with_scale(WIDTH, HEIGHT, LOGICAL_SCALE);
@@ -44,8 +46,21 @@ fn main() {
                     let (log_x, log_y) = frame.real_pos_to_logical(x as usize, y as usize);
                     let center = Offset::new(log_x as i32, log_y as i32);
 
-                    for off in get_offsets_for_square(&center, 2) {
+                    for off in get_offsets_for_square(&center, BRUSH_SIZE) {
                         simulation.add_particle(off, unique_particles[index]);
+                    }
+                }
+                None => {}
+            }
+        } else if window.get_mouse_down(MouseButton::Right) {
+            let opt = window.get_mouse_pos(minifb::MouseMode::Clamp);
+            match opt {
+                Some((x, y)) => {
+                    let (log_x, log_y) = frame.real_pos_to_logical(x as usize, y as usize);
+                    let center = Offset::new(log_x as i32, log_y as i32);
+
+                    for off in get_offsets_for_square(&center, BRUSH_SIZE) {
+                        simulation.remove_particle(off);
                     }
                 }
                 None => {}
@@ -66,7 +81,9 @@ fn main() {
 }
 
 fn draw_ui_to_frame(frame: &mut Frame, current_particle: &Particle) {
-    let _ = frame.draw_pixel(1, 1, current_particle.color);
+    for offset in get_offsets_for_square(&Offset::new(5, 5), INDICATOR_SIZE) {
+        let _ = frame.draw_pixel(offset.x as usize, offset.y as usize, current_particle.color);
+    }
 }
 
 fn get_offsets_for_square(center: &Offset, size: usize) -> Vec<Offset> {

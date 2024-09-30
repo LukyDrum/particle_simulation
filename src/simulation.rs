@@ -53,6 +53,23 @@ impl Simulation {
         false
     }
 
+    pub fn remove_particle(&mut self, offset: Offset) -> bool {
+        if !self.is_within(&offset) {
+            return false;
+        }
+
+        let opt = self.particles[offset.y as usize][offset.x as usize];
+
+        match opt {
+            None => return false,
+            Some(_) => {
+                self.particles[offset.y as usize][offset.x as usize] = None;
+
+                return true;
+            }
+        }
+    }
+
     pub fn simulate_step(&mut self) -> () {
         // Iterate through the grid
         for y in 0..self.height {
