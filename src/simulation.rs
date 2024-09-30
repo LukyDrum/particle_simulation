@@ -1,9 +1,11 @@
 use crate::{frame::Frame, offset::Offset, particle::Particle};
 
-enum SimMove {
+pub enum SimMove {
     None,
     MoveTo,
     SwitchWith(Particle),
+    Replace,
+    Spread,
 }
 
 pub struct Simulation {
@@ -111,8 +113,8 @@ impl Simulation {
                             match sim_move {
                                 // No action should be taken, continue searching
                                 SimMove::None => {}
-                                // Move to a free spot
-                                SimMove::MoveTo => {
+                                // Move to a free spot or replace the particle there
+                                SimMove::MoveTo | SimMove::Replace => {
                                     // Set particle as updated
                                     particle.was_update = true;
                                     // Set the old spot as free
@@ -139,6 +141,19 @@ impl Simulation {
 
                                     // Set the move flag and exit loop
                                     made_move = true;
+                                    break;
+                                }
+                                SimMove::Spread => {
+                                    // Set particle as updated
+                                    particle.was_update = true;
+                                    // Set the old spot to updated particle
+                                    self.particles[y][x] = Some(particle);
+                                    // Set the new spot as occupied by the current particle
+                                    self.particles[new_pos.y as usize][new_pos.x as usize] =
+                                        Some(particle);
+                                    // Set the flag that a move has been made
+                                    made_move = true;
+                                    // Exit the loop
                                     break;
                                 }
                             }
@@ -175,12 +190,14 @@ impl Simulation {
 
             match on_offset {
                 Some(other_particle) => {
-                    if particle.is_solid && !other_particle.is_solid && other_particle.is_moveable {
+                    // Switch with accordance to density.
+                    if other_particle.density < particle.density {
                         return SimMove::SwitchWith(other_particle);
                     } else {
                         return SimMove::None;
                     }
                 }
+                // If there is no particle just move there
                 None => {
                     return SimMove::MoveTo;
                 }
