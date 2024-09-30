@@ -10,6 +10,10 @@ impl Offset {
     pub fn new(x: i32, y: i32) -> Offset {
         Offset { x, y }
     }
+
+    pub fn zero() -> Offset {
+        Offset { x: 0, y: 0 }
+    }
 }
 
 impl ops::Add for Offset {
