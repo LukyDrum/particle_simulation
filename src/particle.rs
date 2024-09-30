@@ -50,6 +50,18 @@ impl Particle {
             was_update: false,
         }
     }
+
+    pub fn smoke() -> Particle {
+        Particle {
+            color: 0x00C7C7C7,
+            is_solid: false,
+            is_moveable: true,
+            primary_offset: Offset::new(0, -1),
+            secondary_offsets: [Offset::new(-1, -1), Offset::new(1, -1)],
+            ternary_offsets: [Offset::new(-1, 0), Offset::new(1, 0)],
+            was_update: false,
+        }
+    }
 }
 
 impl Particle {

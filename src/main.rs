@@ -13,7 +13,7 @@ const WIDTH: usize = 100;
 const HEIGHT: usize = 100;
 const LOGICAL_SCALE: usize = 5;
 const INDICATOR_SIZE: usize = 4;
-const BRUSH_SIZE: usize = 10;
+const BRUSH_SIZE: usize = 2;
 
 fn main() {
     let mut frame = Frame::new_with_scale(WIDTH, HEIGHT, LOGICAL_SCALE);
@@ -32,7 +32,12 @@ fn main() {
 
     let mut simulation = Simulation::new(WIDTH, HEIGHT);
 
-    let unique_particles = vec![Particle::sand(), Particle::water(), Particle::rock()];
+    let unique_particles = vec![
+        Particle::sand(),
+        Particle::water(),
+        Particle::rock(),
+        Particle::smoke(),
+    ];
     let mut index = 0;
     while window.is_open() && !window.is_key_down(Key::Escape) {
         if window.is_key_pressed(Key::Space, minifb::KeyRepeat::No) {
