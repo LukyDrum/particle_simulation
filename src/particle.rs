@@ -1,7 +1,20 @@
 use rand::random;
 
 use crate::offset::Offset;
-use crate::simulation::SimMove;
+
+#[derive(Clone, Copy, PartialEq)]
+pub enum Acidity {
+    None,
+    IsAcid,
+    DoesDissolve,
+}
+
+#[derive(Clone, Copy, PartialEq)]
+pub enum Burnability {
+    None,
+    IsBurning,
+    DoesBurn,
+}
 
 /// Basic particle types:
 ///
@@ -9,7 +22,7 @@ use crate::simulation::SimMove;
 ///
 /// Water - spreads to side
 ///
-/// Rock - is immoveable
+/// Rock - is immoveable but can dissolve in acidic particles
 ///
 /// Smoke - raises opposite to water
 #[derive(Clone, Copy)]
@@ -19,6 +32,8 @@ pub struct Particle {
     /// Gasses are near to 0, Fluids around 128, Solid particles at 255.
     pub density: u8,
     pub is_moveable: bool,
+    pub acidity: Acidity,
+    pub burnability: Burnability,
     pub primary_offset: Offset,
     pub secondary_offsets: [Offset; 2],
     pub ternary_offsets: [Offset; 2],
@@ -32,6 +47,8 @@ impl Particle {
             color: 0x00FFF32D,
             density: 255,
             is_moveable: true,
+            acidity: Acidity::None,
+            burnability: Burnability::None,
             primary_offset: Offset::new(0, 1),
             secondary_offsets: [Offset::new(-1, 1), Offset::new(1, 1)],
             ternary_offsets: [Offset::zero(), Offset::zero()],
@@ -44,6 +61,8 @@ impl Particle {
             color: 0x001BB2F2,
             density: 128,
             is_moveable: true,
+            acidity: Acidity::None,
+            burnability: Burnability::None,
             primary_offset: Offset::new(0, 1),
             secondary_offsets: [Offset::new(-1, 1), Offset::new(1, 1)],
             ternary_offsets: [Offset::new(-1, 0), Offset::new(1, 0)],
@@ -56,6 +75,8 @@ impl Particle {
             color: 0x00909090,
             density: 255,
             is_moveable: false,
+            acidity: Acidity::DoesDissolve,
+            burnability: Burnability::None,
             primary_offset: Offset::zero(),
             secondary_offsets: [Offset::zero(), Offset::zero()],
             ternary_offsets: [Offset::zero(), Offset::zero()],
@@ -68,8 +89,24 @@ impl Particle {
             color: 0x00C7C7C7,
             density: 1,
             is_moveable: true,
+            acidity: Acidity::None,
+            burnability: Burnability::None,
             primary_offset: Offset::new(0, -1),
             secondary_offsets: [Offset::new(-1, -1), Offset::new(1, -1)],
+            ternary_offsets: [Offset::new(-1, 0), Offset::new(1, 0)],
+            was_update: false,
+        }
+    }
+
+    pub fn acid() -> Particle {
+        Particle {
+            color: 0x003EF719,
+            density: 130, // Higher than water
+            is_moveable: true,
+            acidity: Acidity::IsAcid,
+            burnability: Burnability::None,
+            primary_offset: Offset::new(0, 1),
+            secondary_offsets: [Offset::new(-1, 1), Offset::new(1, 1)],
             ternary_offsets: [Offset::new(-1, 0), Offset::new(1, 0)],
             was_update: false,
         }

@@ -37,6 +37,7 @@ fn main() {
         Particle::water(),
         Particle::rock(),
         Particle::smoke(),
+        Particle::acid(),
     ];
     let mut index = 0;
     while window.is_open() && !window.is_key_down(Key::Escape) {

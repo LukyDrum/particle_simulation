@@ -1,4 +1,8 @@
-use crate::{frame::Frame, offset::Offset, particle::Particle};
+use crate::{
+    frame::Frame,
+    offset::Offset,
+    particle::{Acidity, Burnability, Particle},
+};
 
 pub enum SimMove {
     None,
@@ -193,11 +197,23 @@ impl Simulation {
                     // Switch with accordance to density.
                     if other_particle.density < particle.density {
                         return SimMove::SwitchWith(other_particle);
+                    }
+                    // Replace the other as if by dissolving it.
+                    else if particle.acidity == Acidity::IsAcid
+                        && other_particle.acidity == Acidity::DoesDissolve
+                    {
+                        return SimMove::Replace;
+                    }
+                    // Spread to the other as if by spreading fire.
+                    else if particle.burnability == Burnability::IsBurning
+                        && other_particle.burnability == Burnability::DoesBurn
+                    {
+                        return SimMove::Spread;
                     } else {
                         return SimMove::None;
                     }
                 }
-                // If there is no particle just move there
+                // If there is no particle just move there.
                 None => {
                     return SimMove::MoveTo;
                 }
