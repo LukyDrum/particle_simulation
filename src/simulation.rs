@@ -2,7 +2,6 @@ use crate::{frame::Frame, offset::Offset, particle::Particle};
 
 enum SimMove {
     None,
-    Stay,
     MoveTo,
     SwitchWith(Particle),
 }
@@ -142,7 +141,6 @@ impl Simulation {
                                     made_move = true;
                                     break;
                                 }
-                                _ => {}
                             }
                         }
 
