@@ -4,7 +4,7 @@ enum SimMove {
     None,
     Stay,
     MoveTo,
-    SwitchWith,
+    SwitchWith(Particle),
 }
 
 pub struct Simulation {
@@ -104,6 +104,22 @@ impl Simulation {
                                     // Exit the loop
                                     break;
                                 }
+                                // Switch yourself with the other particle; both particles should be set as updated after this step
+                                SimMove::SwitchWith(other_particle) => {
+                                    let mut other_particle = other_particle;
+                                    // Set both particles as updated
+                                    particle.was_update = true;
+                                    other_particle.was_update = true;
+
+                                    // Switch them in grid
+                                    self.particles[new_pos.y as usize][new_pos.x as usize] =
+                                        Some(particle);
+                                    self.particles[y][x] = Some(other_particle);
+
+                                    // Set the move flag and exit loop
+                                    made_move = true;
+                                    break;
+                                }
                                 _ => {}
                             }
                         }
@@ -138,7 +154,13 @@ impl Simulation {
             let on_offset = self.particles[offset.y as usize][offset.x as usize];
 
             match on_offset {
-                Some(other_particle) => return SimMove::None,
+                Some(other_particle) => {
+                    if particle.is_solid && !other_particle.is_solid && other_particle.is_moveable {
+                        return SimMove::SwitchWith(other_particle);
+                    } else {
+                        return SimMove::None;
+                    }
+                }
                 None => {
                     return SimMove::MoveTo;
                 }
