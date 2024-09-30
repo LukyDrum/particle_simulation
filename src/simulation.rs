@@ -72,6 +72,11 @@ impl Simulation {
                             continue;
                         }
 
+                        // Check if the particle is moveable
+                        if !particle.is_moveable {
+                            continue; // There is no need to set is_updated
+                        }
+
                         // Get a vec of offsets to which the particle would like to move to in order of importance
                         let offsets_to_try = particle.get_offsets_to_try();
 

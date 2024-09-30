@@ -30,7 +30,7 @@ fn main() {
 
     let mut simulation = Simulation::new(WIDTH, HEIGHT);
 
-    let unique_particles = vec![Particle::sand(), Particle::water()];
+    let unique_particles = vec![Particle::sand(), Particle::water(), Particle::rock()];
     let mut index = 0;
     while window.is_open() && !window.is_key_down(Key::Escape) {
         if window.is_key_pressed(Key::Space, minifb::KeyRepeat::No) {

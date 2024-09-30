@@ -22,7 +22,7 @@ impl Particle {
             is_moveable: true,
             primary_offset: Offset::new(0, 1),
             secondary_offsets: [Offset::new(-1, 1), Offset::new(1, 1)],
-            ternary_offsets: [Offset::new(0, 0), Offset::new(0, 0)],
+            ternary_offsets: [Offset::zero(), Offset::zero()],
             was_update: false,
         }
     }
@@ -35,6 +35,18 @@ impl Particle {
             primary_offset: Offset::new(0, 1),
             secondary_offsets: [Offset::new(-1, 1), Offset::new(1, 1)],
             ternary_offsets: [Offset::new(-1, 0), Offset::new(1, 0)],
+            was_update: false,
+        }
+    }
+
+    pub fn rock() -> Particle {
+        Particle {
+            color: 0x00909090,
+            is_solid: true,
+            is_moveable: false,
+            primary_offset: Offset::zero(),
+            secondary_offsets: [Offset::zero(), Offset::zero()],
+            ternary_offsets: [Offset::zero(), Offset::zero()],
             was_update: false,
         }
     }
