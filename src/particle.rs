@@ -25,6 +25,14 @@ pub enum Burnability {
 /// Rock - is immoveable but can dissolve in acidic particles
 ///
 /// Smoke - raises opposite to water
+///
+/// Acid - denser than water, can dissolve rock
+///
+/// Wood - like rock, but does not dissolve in acid and is flameable
+///
+/// Oil - like water, but less dense and burns
+///
+/// Flame - like sand, but is burning
 #[derive(Clone, Copy)]
 pub struct Particle {
     pub color: u32,
@@ -108,6 +116,48 @@ impl Particle {
             primary_offset: Offset::new(0, 1),
             secondary_offsets: [Offset::new(-1, 1), Offset::new(1, 1)],
             ternary_offsets: [Offset::new(-1, 0), Offset::new(1, 0)],
+            was_update: false,
+        }
+    }
+
+    pub fn wood() -> Particle {
+        Particle {
+            color: 0x00451C03,
+            density: 255,
+            is_moveable: false,
+            acidity: Acidity::None,
+            burnability: Burnability::DoesBurn,
+            primary_offset: Offset::zero(),
+            secondary_offsets: [Offset::zero(), Offset::zero()],
+            ternary_offsets: [Offset::zero(), Offset::zero()],
+            was_update: false,
+        }
+    }
+
+    pub fn oil() -> Particle {
+        Particle {
+            color: 0x00857110,
+            density: 126, // Higher than water
+            is_moveable: true,
+            acidity: Acidity::None,
+            burnability: Burnability::DoesBurn,
+            primary_offset: Offset::new(0, 1),
+            secondary_offsets: [Offset::new(-1, 1), Offset::new(1, 1)],
+            ternary_offsets: [Offset::new(-1, 0), Offset::new(1, 0)],
+            was_update: false,
+        }
+    }
+
+    pub fn fire() -> Particle {
+        Particle {
+            color: 0x00FF0000,
+            density: 255, // Higher than water
+            is_moveable: true,
+            acidity: Acidity::None,
+            burnability: Burnability::IsBurning,
+            primary_offset: Offset::new(0, 1),
+            secondary_offsets: [Offset::new(-1, 1), Offset::new(1, 1)],
+            ternary_offsets: [Offset::new(0, 0), Offset::new(0, 0)],
             was_update: false,
         }
     }

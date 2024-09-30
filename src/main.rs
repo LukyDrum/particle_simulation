@@ -6,7 +6,7 @@ mod simulation;
 use crate::frame::Frame;
 use minifb::{Key, MouseButton, Window, WindowOptions};
 use offset::Offset;
-use particle::Particle;
+use particle::{Burnability, Particle};
 use simulation::Simulation;
 
 const WIDTH: usize = 100;
@@ -38,6 +38,8 @@ fn main() {
         Particle::rock(),
         Particle::smoke(),
         Particle::acid(),
+        Particle::wood(),
+        Particle::oil(),
     ];
     let mut index = 0;
     while window.is_open() && !window.is_key_down(Key::Escape) {
@@ -67,6 +69,28 @@ fn main() {
 
                     for off in get_offsets_for_square(&center, BRUSH_SIZE) {
                         simulation.remove_particle(off);
+                    }
+                }
+                None => {}
+            }
+        } else if window.get_mouse_down(MouseButton::Middle) {
+            let opt = window.get_mouse_pos(minifb::MouseMode::Clamp);
+            match opt {
+                Some((x, y)) => {
+                    let (log_x, log_y) = frame.real_pos_to_logical(x as usize, y as usize);
+                    let center = Offset::new(log_x as i32, log_y as i32);
+
+                    for off in get_offsets_for_square(&center, BRUSH_SIZE) {
+                        let opt = simulation.get_particle(&off);
+
+                        match opt {
+                            Some(p) => {
+                                if p.burnability == Burnability::DoesBurn {
+                                    simulation.change_particle(&off, &Particle::fire());
+                                }
+                            }
+                            None => {}
+                        }
                     }
                 }
                 None => {}

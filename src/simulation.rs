@@ -9,7 +9,6 @@ pub enum SimMove {
     MoveTo,
     SwitchWith(Particle),
     Replace,
-    Spread,
 }
 
 pub struct Simulation {
@@ -75,6 +74,22 @@ impl Simulation {
         }
     }
 
+    pub fn get_particle(&self, offset: &Offset) -> &Option<Particle> {
+        if !self.is_within(&offset) {
+            return &None;
+        }
+
+        &self.particles[offset.y as usize][offset.x as usize]
+    }
+
+    pub fn change_particle(&mut self, offset: &Offset, new_particle: &Particle) -> () {
+        if !self.is_within(&offset) {
+            return;
+        }
+
+        self.particles[offset.y as usize][offset.x as usize] = Some(*new_particle);
+    }
+
     pub fn simulate_step(&mut self) -> () {
         // Iterate through the grid
         for y in 0..self.height {
@@ -97,6 +112,12 @@ impl Simulation {
                         // Check if the particle is moveable
                         if !particle.is_moveable {
                             continue; // There is no need to set is_updated
+                        }
+
+                        // Handle if the particle is burning
+                        if particle.burnability == Burnability::IsBurning {
+                            self.handle_burning(Offset::new(x as i32, y as i32));
+                            continue;
                         }
 
                         // Get a vec of offsets to which the particle would like to move to in order of importance
@@ -147,19 +168,6 @@ impl Simulation {
                                     made_move = true;
                                     break;
                                 }
-                                SimMove::Spread => {
-                                    // Set particle as updated
-                                    particle.was_update = true;
-                                    // Set the old spot to updated particle
-                                    self.particles[y][x] = Some(particle);
-                                    // Set the new spot as occupied by the current particle
-                                    self.particles[new_pos.y as usize][new_pos.x as usize] =
-                                        Some(particle);
-                                    // Set the flag that a move has been made
-                                    made_move = true;
-                                    // Exit the loop
-                                    break;
-                                }
                             }
                         }
 
@@ -194,21 +202,15 @@ impl Simulation {
 
             match on_offset {
                 Some(other_particle) => {
-                    // Switch with accordance to density.
-                    if other_particle.density < particle.density {
-                        return SimMove::SwitchWith(other_particle);
-                    }
                     // Replace the other as if by dissolving it.
-                    else if particle.acidity == Acidity::IsAcid
+                    if particle.acidity == Acidity::IsAcid
                         && other_particle.acidity == Acidity::DoesDissolve
                     {
                         return SimMove::Replace;
                     }
-                    // Spread to the other as if by spreading fire.
-                    else if particle.burnability == Burnability::IsBurning
-                        && other_particle.burnability == Burnability::DoesBurn
-                    {
-                        return SimMove::Spread;
+                    // Switch with accordance to density.
+                    else if other_particle.density < particle.density {
+                        return SimMove::SwitchWith(other_particle);
                     } else {
                         return SimMove::None;
                     }
@@ -221,6 +223,35 @@ impl Simulation {
         }
 
         SimMove::None
+    }
+
+    /// Destroy the burning particle and spread the burning to neighbors
+    fn handle_burning(&mut self, offset: Offset) {
+        // Spread burn to all neighbors and set them as updated; +2 because the end is exlusive
+        for x in (offset.x - 1)..(offset.x + 2) {
+            for y in (offset.y - 1)..(offset.y + 2) {
+                if !self.is_within(&Offset::new(x, y)) {
+                    continue;
+                }
+
+                let opt = &mut self.particles[y as usize][x as usize];
+                match opt {
+                    None => {}
+                    Some(p) => {
+                        // Skip particles that cannot burn
+                        if p.burnability != Burnability::DoesBurn {
+                            continue;
+                        }
+
+                        self.particles[y as usize][x as usize] = Some(Particle::fire());
+                        // p.was_update = true;
+                    }
+                }
+            }
+        }
+
+        // Destroy the old particle
+        self.particles[offset.y as usize][offset.x as usize] = None;
     }
 
     fn is_within(&self, offset: &Offset) -> bool {
