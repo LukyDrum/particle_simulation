@@ -42,9 +42,11 @@ fn main() {
             match opt {
                 Some((x, y)) => {
                     let (log_x, log_y) = frame.real_pos_to_logical(x as usize, y as usize);
-                    let offset = Offset::new(log_x as i32, log_y as i32);
+                    let center = Offset::new(log_x as i32, log_y as i32);
 
-                    simulation.add_particle(offset, unique_particles[index]);
+                    for off in get_offsets_for_square(&center, 2) {
+                        simulation.add_particle(off, unique_particles[index]);
+                    }
                 }
                 None => {}
             }
@@ -65,4 +67,18 @@ fn main() {
 
 fn draw_ui_to_frame(frame: &mut Frame, current_particle: &Particle) {
     let _ = frame.draw_pixel(1, 1, current_particle.color);
+}
+
+fn get_offsets_for_square(center: &Offset, size: usize) -> Vec<Offset> {
+    let size_half = (size / 2) as i32;
+
+    let mut offsets = Vec::new();
+
+    for x in (center.x - size_half)..(center.x + size_half) {
+        for y in (center.y - size_half)..(center.y + size_half) {
+            offsets.push(Offset::new(x, y));
+        }
+    }
+
+    offsets
 }
