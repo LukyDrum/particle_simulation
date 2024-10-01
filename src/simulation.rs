@@ -114,12 +114,6 @@ impl Simulation {
                             continue; // There is no need to set is_updated
                         }
 
-                        // Handle if the particle is burning
-                        if particle.burnability == Burnability::IsBurning {
-                            self.handle_burning(Offset::new(x as i32, y as i32));
-                            continue;
-                        }
-
                         // Get a vec of offsets to which the particle would like to move to in order of importance
                         let offsets_to_try = particle.get_offsets_to_try();
 
@@ -135,6 +129,7 @@ impl Simulation {
                             let sim_move = self.try_offset(&new_pos, &particle);
 
                             // Check what actions you should do based on the SimMove
+                            let mut should_break = false;
                             match sim_move {
                                 // No action should be taken, continue searching
                                 SimMove::None => {}
@@ -150,7 +145,7 @@ impl Simulation {
                                     // Set the flag that a move has been made
                                     made_move = true;
                                     // Exit the loop
-                                    break;
+                                    should_break = true;
                                 }
                                 // Switch yourself with the other particle; both particles should be set as updated after this step
                                 SimMove::SwitchWith(other_particle) => {
@@ -166,8 +161,17 @@ impl Simulation {
 
                                     // Set the move flag and exit loop
                                     made_move = true;
-                                    break;
+                                    should_break = true;
                                 }
+                            }
+
+                            if should_break {
+                                // Handle if the particle is burning
+                                if particle.burnability == Burnability::IsBurning {
+                                    self.handle_burning(new_pos);
+                                }
+
+                                break;
                             }
                         }
 
@@ -175,6 +179,11 @@ impl Simulation {
                         if !made_move {
                             particle.was_update = true;
                             self.particles[y][x] = Some(particle);
+
+                            // Handle if the particle is burning
+                            if particle.burnability == Burnability::IsBurning {
+                                self.handle_burning(Offset::new(x as i32, y as i32));
+                            }
                         }
                     }
                 }
@@ -248,6 +257,10 @@ impl Simulation {
                         fire_particle.was_update = true;
                         // Make it inherit the durability value from the original particle
                         fire_particle.durability = p.durability;
+                        // Inherit offsets
+                        fire_particle.primary_offset = p.primary_offset;
+                        fire_particle.secondary_offsets = p.secondary_offsets;
+                        fire_particle.ternary_offsets = p.ternary_offsets;
 
                         self.particles[y as usize][x as usize] = Some(fire_particle);
                     }
