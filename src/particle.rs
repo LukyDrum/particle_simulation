@@ -16,6 +16,9 @@ pub enum Burnability {
     DoesBurn,
 }
 
+const DENSITY_MAX: u8 = 255;
+const DURABILITY_MAX: u8 = 255;
+
 /// Basic particle types:
 ///
 /// Sand - just falls
@@ -57,11 +60,11 @@ impl Particle {
     pub fn sand() -> Particle {
         Particle {
             color: 0x00FFF32D,
-            density: 255,
+            density: DENSITY_MAX,
             is_moveable: true,
             acidity: Acidity::None,
             burnability: Burnability::None,
-            durability: 128,
+            durability: DURABILITY_MAX,
             primary_offset: Offset::new(0, 1),
             secondary_offsets: [Offset::new(-1, 1), Offset::new(1, 1)],
             ternary_offsets: [Offset::zero(), Offset::zero()],
@@ -76,7 +79,7 @@ impl Particle {
             is_moveable: true,
             acidity: Acidity::None,
             burnability: Burnability::None,
-            durability: 128,
+            durability: DURABILITY_MAX,
             primary_offset: Offset::new(0, 1),
             secondary_offsets: [Offset::new(-1, 1), Offset::new(1, 1)],
             ternary_offsets: [Offset::new(-1, 0), Offset::new(1, 0)],
@@ -87,7 +90,7 @@ impl Particle {
     pub fn rock() -> Particle {
         Particle {
             color: 0x00909090,
-            density: 255,
+            density: DENSITY_MAX,
             is_moveable: false,
             acidity: Acidity::DoesDissolve,
             burnability: Burnability::None,
@@ -106,7 +109,7 @@ impl Particle {
             is_moveable: true,
             acidity: Acidity::None,
             burnability: Burnability::None,
-            durability: 128,
+            durability: DURABILITY_MAX,
             primary_offset: Offset::new(0, -1),
             secondary_offsets: [Offset::new(-1, -1), Offset::new(1, -1)],
             ternary_offsets: [Offset::new(-1, 0), Offset::new(1, 0)],
@@ -121,7 +124,7 @@ impl Particle {
             is_moveable: true,
             acidity: Acidity::IsAcid,
             burnability: Burnability::None,
-            durability: 128,
+            durability: DURABILITY_MAX,
             primary_offset: Offset::new(0, 1),
             secondary_offsets: [Offset::new(-1, 1), Offset::new(1, 1)],
             ternary_offsets: [Offset::new(-1, 0), Offset::new(1, 0)],
@@ -132,11 +135,11 @@ impl Particle {
     pub fn wood() -> Particle {
         Particle {
             color: 0x00451C03,
-            density: 255,
+            density: DENSITY_MAX,
             is_moveable: false,
             acidity: Acidity::None,
             burnability: Burnability::DoesBurn,
-            durability: 4, // Burns for 4 simulation steps, then is destroyed.
+            durability: 8, // Burns for 8 simulation steps, then is destroyed.
             primary_offset: Offset::zero(),
             secondary_offsets: [Offset::zero(), Offset::zero()],
             ternary_offsets: [Offset::zero(), Offset::zero()],
@@ -151,7 +154,7 @@ impl Particle {
             is_moveable: true,
             acidity: Acidity::None,
             burnability: Burnability::DoesBurn,
-            durability: 2, // Burns for 2 simulation steps, then is destroyed.
+            durability: 4, // Burns for 4 simulation steps, then is destroyed.
             primary_offset: Offset::new(0, 1),
             secondary_offsets: [Offset::new(-1, 1), Offset::new(1, 1)],
             ternary_offsets: [Offset::new(-1, 0), Offset::new(1, 0)],
@@ -162,11 +165,11 @@ impl Particle {
     pub fn fire() -> Particle {
         Particle {
             color: 0x00FF0000,
-            density: 255,
+            density: DENSITY_MAX,
             is_moveable: true,
             acidity: Acidity::None,
             burnability: Burnability::IsBurning,
-            durability: 4,
+            durability: 8,
             primary_offset: Offset::new(0, 1),
             secondary_offsets: [Offset::new(-1, 1), Offset::new(1, 1)],
             ternary_offsets: [Offset::new(0, 0), Offset::new(0, 0)],

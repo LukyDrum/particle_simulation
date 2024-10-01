@@ -243,16 +243,28 @@ impl Simulation {
                             continue;
                         }
 
+                        // Create a new fire particle and set it as updated
                         let mut fire_particle = Particle::fire();
                         fire_particle.was_update = true;
+                        // Make it inherit the durability value from the original particle
+                        fire_particle.durability = p.durability;
                         self.particles[y as usize][x as usize] = Some(fire_particle);
                     }
                 }
             }
         }
 
-        // Destroy the old particle
-        self.particles[offset.y as usize][offset.x as usize] = None;
+        // Decrease durability - safe to unwrap, it is guaranteed the particle is here
+        let mut p = self.particles[offset.y as usize][offset.x as usize].unwrap();
+        p.durability -= 1;
+        p.was_update = true;
+
+        // If durability drops to 0 destroy the old particle
+        if p.durability <= 0 {
+            self.particles[offset.y as usize][offset.x as usize] = None;
+        } else {
+            self.particles[offset.y as usize][offset.x as usize] = Some(p);
+        }
     }
 
     fn is_within(&self, offset: &Offset) -> bool {
