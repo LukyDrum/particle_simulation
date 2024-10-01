@@ -260,6 +260,11 @@ impl Simulation {
                             continue;
                         }
 
+                        // Sometimes the fire wont spread
+                        if random() {
+                            continue;
+                        }
+
                         // Create a new fire particle and set it as updated
                         let mut fire_particle = Particle::fire();
                         fire_particle.was_update = true;

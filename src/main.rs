@@ -12,8 +12,8 @@ use simulation::Simulation;
 const WIDTH: usize = 100;
 const HEIGHT: usize = 100;
 const LOGICAL_SCALE: usize = 5;
-const INDICATOR_SIZE: usize = 4;
-const BRUSH_SIZE: usize = 2;
+const INDICATOR_SIZE: usize = 10;
+const BRUSH_SIZE: usize = 5;
 
 fn main() {
     let mut frame = Frame::new_with_scale(WIDTH, HEIGHT, LOGICAL_SCALE);
