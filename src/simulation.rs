@@ -243,8 +243,9 @@ impl Simulation {
                             continue;
                         }
 
-                        self.particles[y as usize][x as usize] = Some(Particle::fire());
-                        // p.was_update = true;
+                        let mut fire_particle = Particle::fire();
+                        fire_particle.was_update = true;
+                        self.particles[y as usize][x as usize] = Some(fire_particle);
                     }
                 }
             }
