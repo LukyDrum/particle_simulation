@@ -33,14 +33,15 @@ fn main() {
     let mut simulation = Simulation::new(WIDTH, HEIGHT);
 
     let unique_particles = vec![
-        Particle::sand(),
-        Particle::water(),
-        Particle::rock(),
-        Particle::smoke(),
-        Particle::acid(),
-        Particle::wood(),
-        Particle::oil(),
+        Particle::sand,
+        Particle::water,
+        Particle::rock,
+        Particle::smoke,
+        Particle::acid,
+        Particle::wood,
+        Particle::oil,
     ];
+    let indicator_particles: Vec<Particle> = unique_particles.iter().map(|p| p()).collect();
     let mut index = 0;
     while window.is_open() && !window.is_key_down(Key::Escape) {
         if window.is_key_pressed(Key::Space, minifb::KeyRepeat::No) {
@@ -55,7 +56,7 @@ fn main() {
                     let center = Offset::new(log_x as i32, log_y as i32);
 
                     for off in get_offsets_for_square(&center, BRUSH_SIZE) {
-                        simulation.add_particle(off, unique_particles[index]);
+                        simulation.add_particle(off, unique_particles[index]());
                     }
                 }
                 None => {}
@@ -101,7 +102,7 @@ fn main() {
         simulation.simulate_step();
         simulation.draw_to_frame(&mut frame);
 
-        draw_ui_to_frame(&mut frame, &unique_particles[index]);
+        draw_ui_to_frame(&mut frame, &indicator_particles[index]);
 
         // We unwrap here as we want this code to exit if it fails. Real applications may want to handle this in a different way
         window

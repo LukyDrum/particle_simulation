@@ -1,4 +1,4 @@
-use rand::random;
+use rand::{random, thread_rng, Rng};
 
 use crate::offset::Offset;
 
@@ -59,7 +59,7 @@ pub struct Particle {
 impl Particle {
     pub fn sand() -> Particle {
         Particle {
-            color: 0x00FFF32D,
+            color: Self::get_near_color(0x00E0E02D),
             density: DENSITY_MAX,
             is_moveable: true,
             acidity: Acidity::None,
@@ -74,7 +74,7 @@ impl Particle {
 
     pub fn water() -> Particle {
         Particle {
-            color: 0x001BB2F2,
+            color: Self::get_near_color(0x001BB2E0),
             density: 128,
             is_moveable: true,
             acidity: Acidity::None,
@@ -89,7 +89,7 @@ impl Particle {
 
     pub fn rock() -> Particle {
         Particle {
-            color: 0x00909090,
+            color: Self::get_near_color(0x00909090),
             density: DENSITY_MAX,
             is_moveable: false,
             acidity: Acidity::DoesDissolve,
@@ -104,7 +104,7 @@ impl Particle {
 
     pub fn smoke() -> Particle {
         Particle {
-            color: 0x00C7C7C7,
+            color: Self::get_near_color(0x00C7C7C7),
             density: 1,
             is_moveable: true,
             acidity: Acidity::None,
@@ -119,7 +119,7 @@ impl Particle {
 
     pub fn acid() -> Particle {
         Particle {
-            color: 0x003EF719,
+            color: Self::get_near_color(0x003EE219),
             density: 130, // Higher than water
             is_moveable: true,
             acidity: Acidity::IsAcid,
@@ -134,7 +134,7 @@ impl Particle {
 
     pub fn wood() -> Particle {
         Particle {
-            color: 0x00451C03,
+            color: Self::get_near_color(0x00451C03),
             density: DENSITY_MAX,
             is_moveable: false,
             acidity: Acidity::None,
@@ -149,7 +149,7 @@ impl Particle {
 
     pub fn oil() -> Particle {
         Particle {
-            color: 0x00857110,
+            color: Self::get_near_color(0x00857110),
             density: 126, // Lower than water
             is_moveable: true,
             acidity: Acidity::None,
@@ -164,7 +164,7 @@ impl Particle {
 
     pub fn fire() -> Particle {
         Particle {
-            color: 0x00FF0000,
+            color: 0x00E00000,
             density: DENSITY_MAX,
             is_moveable: true,
             acidity: Acidity::None,
@@ -199,5 +199,20 @@ impl Particle {
         offs.push(self.ternary_offsets[b]);
 
         offs
+    }
+}
+
+impl Particle {
+    fn get_near_color(color: u32) -> u32 {
+        // let off_r = thread_rng().gen_range(0..0x10);
+        // let off_g = thread_rng().gen_range(0..0x10);
+        // let off_b = thread_rng().gen_range(0..0x10);
+        let off = thread_rng().gen_range(0..0x15);
+
+        let mut fin_color = color + off;
+        fin_color += off << 8;
+        fin_color += off << 16;
+
+        fin_color
     }
 }

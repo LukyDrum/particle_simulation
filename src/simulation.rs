@@ -248,6 +248,7 @@ impl Simulation {
                         fire_particle.was_update = true;
                         // Make it inherit the durability value from the original particle
                         fire_particle.durability = p.durability;
+
                         self.particles[y as usize][x as usize] = Some(fire_particle);
                     }
                 }
