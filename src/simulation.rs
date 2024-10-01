@@ -125,6 +125,15 @@ impl Simulation {
                             let new_y = y as i32 + offset.y;
                             let new_pos = Offset::new(new_x, new_y);
 
+                            if !self.is_within(&new_pos) {
+                                continue;
+                            }
+
+                            // If the particle is acidic the new_pos for dissolving
+                            if particle.acidity == Acidity::IsAcid {
+                                self.handle_acidity_for_new_offset(&new_pos);
+                            }
+
                             // Get the possible move for that offset
                             let sim_move = self.try_offset(&new_pos, &particle);
 
@@ -206,35 +215,32 @@ impl Simulation {
 
 impl Simulation {
     fn try_offset(&self, offset: &Offset, particle: &Particle) -> SimMove {
-        if self.is_within(offset) {
-            let on_offset = self.particles[offset.y as usize][offset.x as usize];
+        let on_offset = self.particles[offset.y as usize][offset.x as usize];
 
-            match on_offset {
-                Some(other_particle) => {
-                    // Replace the other as if by dissolving it.
-                    if particle.acidity == Acidity::IsAcid
-                        && other_particle.acidity == Acidity::DoesDissolve
-                    {
-                        return SimMove::Replace;
-                    }
-                    // Switch with accordance to density.
-                    else if other_particle.density < particle.density {
-                        return SimMove::SwitchWith(other_particle);
-                    } else {
-                        return SimMove::None;
-                    }
+        match on_offset {
+            Some(other_particle) => {
+                // Replace the other as if by dissolving it.
+                if particle.acidity == Acidity::IsAcid
+                    && other_particle.acidity == Acidity::DoesDissolve
+                    && other_particle.durability <= 0
+                {
+                    return SimMove::Replace;
                 }
-                // If there is no particle just move there.
-                None => {
-                    return SimMove::MoveTo;
+                // Switch with accordance to density.
+                else if other_particle.density < particle.density {
+                    return SimMove::SwitchWith(other_particle);
+                } else {
+                    return SimMove::None;
                 }
             }
+            // If there is no particle just move there.
+            None => {
+                return SimMove::MoveTo;
+            }
         }
-
-        SimMove::None
     }
 
-    /// Destroy the burning particle and spread the burning to neighbors
+    /// Decrease the durability of the burning particle and spread the burning to neighbors
     fn handle_burning(&mut self, offset: Offset) {
         // Spread burn to all neighbors and set them as updated; +2 because the end is exlusive
         for x in (offset.x - 1)..(offset.x + 2) {
@@ -278,6 +284,22 @@ impl Simulation {
             self.particles[offset.y as usize][offset.x as usize] = None;
         } else {
             self.particles[offset.y as usize][offset.x as usize] = Some(p);
+        }
+    }
+
+    fn handle_acidity_for_new_offset(&mut self, offset: &Offset) -> () {
+        let opt = &self.particles[offset.y as usize][offset.x as usize];
+
+        match opt {
+            None => {}
+            Some(p) => {
+                if p.acidity == Acidity::DoesDissolve {
+                    let mut particle = *p;
+                    particle.durability -= 1;
+
+                    self.particles[offset.y as usize][offset.x as usize] = Some(particle);
+                }
+            }
         }
     }
 
