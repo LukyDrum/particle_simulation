@@ -1,3 +1,5 @@
+use rand::random;
+
 use crate::{
     frame::Frame,
     offset::Offset,
@@ -280,8 +282,18 @@ impl Simulation {
         p.was_update = true;
 
         // If durability drops to 0 destroy the old particle
+        // There is a chance that some will be spawned
         if p.durability <= 0 {
-            self.particles[offset.y as usize][offset.x as usize] = None;
+            let product;
+
+            // Roughly 1 in 4
+            if random() && random() {
+                product = Some(Particle::smoke());
+            } else {
+                product = None;
+            }
+
+            self.particles[offset.y as usize][offset.x as usize] = product;
         } else {
             self.particles[offset.y as usize][offset.x as usize] = Some(p);
         }

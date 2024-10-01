@@ -94,7 +94,7 @@ impl Particle {
             is_moveable: false,
             acidity: Acidity::DoesDissolve,
             burnability: Burnability::None,
-            durability: 4, // Takes 4 simulation steps for it to dissolve
+            durability: 8, // Takes N simulation steps for it to dissolve
             primary_offset: Offset::zero(),
             secondary_offsets: [Offset::zero(), Offset::zero()],
             ternary_offsets: [Offset::zero(), Offset::zero()],
@@ -139,7 +139,7 @@ impl Particle {
             is_moveable: false,
             acidity: Acidity::None,
             burnability: Burnability::DoesBurn,
-            durability: 12, // Burns for N simulation steps, then is destroyed.
+            durability: 16, // Burns for N simulation steps, then is destroyed.
             primary_offset: Offset::zero(),
             secondary_offsets: [Offset::zero(), Offset::zero()],
             ternary_offsets: [Offset::zero(), Offset::zero()],
