@@ -25,6 +25,7 @@ pub struct Simulation {
     particles: Vec<Option<Particle>>,
     moves: HashMap<usize, Vec<usize>>, // Destination index, Indexes of particles that want to move there
     sim_info: SimInfo,
+    pub print_debug: bool,
 }
 
 impl Simulation {
@@ -36,6 +37,7 @@ impl Simulation {
             particles: vec![None; width * height],
             moves: HashMap::new(),
             sim_info: SimInfo::new(),
+            print_debug: false,
         }
     }
 
@@ -115,7 +117,9 @@ impl Simulation {
         self.apply_moves();
 
         // Print simulation informations.
-        self.print_sim_info();
+        if self.print_debug {
+            self.print_sim_info();
+        }
 
         self.clear_moves();
     }

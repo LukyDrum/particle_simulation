@@ -3,17 +3,19 @@ mod offset;
 mod particle;
 mod simulation;
 
+use std::time::SystemTime;
+
 use crate::frame::Frame;
 use minifb::{Key, MouseButton, Window, WindowOptions};
 use offset::Offset;
 use particle::Particle;
 use simulation::Simulation;
 
-const WIDTH: usize = 100;
-const HEIGHT: usize = 100;
-const LOGICAL_SCALE: usize = 5;
+const WIDTH: usize = 300;
+const HEIGHT: usize = 300;
+const LOGICAL_SCALE: usize = 2;
 const INDICATOR_SIZE: usize = 10;
-const BRUSH_SIZE: usize = 5;
+const BRUSH_SIZE: usize = 20;
 
 fn main() {
     let mut frame = Frame::new_with_scale(WIDTH, HEIGHT, LOGICAL_SCALE);
@@ -27,15 +29,22 @@ fn main() {
     .unwrap_or_else(|e| {
         panic!("{}", e);
     });
-    // Limit to max ~60 fps update rate
-    window.set_target_fps(30);
+    // Limit to max ~30 fps update rate
+    // window.set_target_fps(30);
 
     let mut simulation = Simulation::new(WIDTH, HEIGHT);
 
     let unique_particles = vec![Particle::sand, Particle::water, Particle::rock];
     let indicator_particles: Vec<Particle> = unique_particles.iter().map(|p| p()).collect();
     let mut index = 0;
+
+    let mut cur_time = SystemTime::now();
+    let mut last_time = cur_time;
+    let mut fps_counter = 0;
+
     while window.is_open() && !window.is_key_down(Key::Escape) {
+        cur_time = SystemTime::now();
+
         if window.is_key_pressed(Key::Space, minifb::KeyRepeat::No) {
             index = (index + 1) % unique_particles.len();
         }
@@ -73,6 +82,14 @@ fn main() {
         // Simulate and draw the particles
         simulation.simulate_step();
         simulation.draw_to_frame(&mut frame);
+
+        // Print FPS
+        fps_counter += 1;
+        if cur_time.duration_since(last_time).unwrap().as_secs_f32() >= 1.0 {
+            println!("FPS: {}", fps_counter);
+            fps_counter = 0;
+            last_time = cur_time;
+        }
 
         draw_ui_to_frame(&mut frame, &indicator_particles[index]);
 
