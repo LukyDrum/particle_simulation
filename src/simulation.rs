@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 use rand::Rng;
 
@@ -23,7 +23,7 @@ pub struct Simulation {
     height: usize,
     bg_color: u32,
     particles: Vec<Option<Particle>>,
-    moves: HashMap<usize, Vec<usize>>, // Destination index, Indexes of particles that want to move there
+    moves: FxHashMap<usize, Vec<usize>>, // Destination index, Indexes of particles that want to move there
     sim_info: SimInfo,
     pub print_debug: bool,
 }
@@ -35,7 +35,7 @@ impl Simulation {
             height,
             bg_color: 0x00000000,
             particles: vec![None; width * height],
-            moves: HashMap::new(),
+            moves: FxHashMap::default(),
             sim_info: SimInfo::new(),
             print_debug: false,
         }
