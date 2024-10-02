@@ -49,10 +49,7 @@ impl Particle {
 }
 
 impl Particle {
-    pub fn get_offsets(&self) -> Vec<Offset> {
-        let mut offs = Vec::with_capacity(3);
-        offs.push(self.primary_offset);
-
+    pub fn get_offsets(&self) -> [Offset; 3] {
         // Randomly choose the first of the secondary offsets
         let a: usize;
         let b: usize;
@@ -65,10 +62,10 @@ impl Particle {
             b = 0;
         }
 
-        offs.push(self.secondary_offsets[a]);
-        offs.push(self.secondary_offsets[b]);
+        let offset_a = self.secondary_offsets[a];
+        let offset_b = self.secondary_offsets[b];
 
-        offs
+        [self.primary_offset, offset_a, offset_b]
     }
 }
 
