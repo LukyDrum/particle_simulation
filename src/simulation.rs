@@ -4,12 +4,27 @@ use rand::Rng;
 
 use crate::{frame::Frame, offset::Offset, particle::Particle};
 
+struct SimInfo {
+    pub particle_count: u32,
+    pub moves_made_last_frame: u32,
+}
+
+impl SimInfo {
+    pub fn new() -> SimInfo {
+        SimInfo {
+            particle_count: 0,
+            moves_made_last_frame: 0,
+        }
+    }
+}
+
 pub struct Simulation {
     width: usize,
     height: usize,
     bg_color: u32,
     particles: Vec<Option<Particle>>,
     moves: HashMap<usize, Vec<usize>>, // Destination index, Indexes of particles that want to move there
+    sim_info: SimInfo,
 }
 
 impl Simulation {
@@ -20,6 +35,7 @@ impl Simulation {
             bg_color: 0x00000000,
             particles: vec![None; width * height],
             moves: HashMap::new(),
+            sim_info: SimInfo::new(),
         }
     }
 
@@ -50,6 +66,9 @@ impl Simulation {
             return true;
         }
 
+        // Update Sim Info
+        self.sim_info.particle_count += 1;
+
         false
     }
 
@@ -65,6 +84,9 @@ impl Simulation {
             None => return false,
             Some(_) => {
                 self.particles[index] = None;
+
+                // Update Sim Info
+                self.sim_info.particle_count -= 1;
 
                 return true;
             }
@@ -91,6 +113,10 @@ impl Simulation {
     pub fn simulate_step(&mut self) -> () {
         self.find_moves();
         self.apply_moves();
+
+        // Print simulation informations.
+        self.print_sim_info();
+
         self.clear_moves();
     }
 }
@@ -146,12 +172,18 @@ impl Simulation {
             self.particles[*to] = self.particles[chosen_from];
             // Free the old sport
             self.particles[chosen_from] = None;
+
+            // Update Sim Info
+            self.sim_info.moves_made_last_frame += 1;
         }
     }
 
     /// Clears the moves map
     fn clear_moves(&mut self) -> () {
         self.moves.clear();
+
+        // Update Sim Info
+        self.sim_info.moves_made_last_frame = 0;
     }
 
     fn is_within(&self, offset: &Offset) -> bool {
@@ -170,5 +202,13 @@ impl Simulation {
         let x = index - (y * self.width);
 
         Offset::new(x as i32, y as i32)
+    }
+
+    fn print_sim_info(&self) -> () {
+        println!("Particle count: {}", self.sim_info.particle_count);
+        println!(
+            "Move made last frame: {}",
+            self.sim_info.moves_made_last_frame
+        );
     }
 }
