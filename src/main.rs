@@ -50,6 +50,8 @@ fn main() {
                     for off in get_offsets_for_square(&center, BRUSH_SIZE) {
                         simulation.add_particle(&off, unique_particles[index]());
                     }
+
+                    // simulation.add_particle(&center, unique_particles[index]());
                 }
                 None => {}
             }
