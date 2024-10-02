@@ -1,6 +1,6 @@
-use rustc_hash::FxHashMap;
-
 use rand::Rng;
+use rustc_hash::FxHashMap;
+use std::thread;
 
 use crate::{frame::Frame, offset::Offset, particle::Particle};
 
@@ -18,6 +18,8 @@ impl SimInfo {
     }
 }
 
+const DEFAULT_THREAD_COUNT: usize = 8;
+
 pub struct Simulation {
     width: usize,
     height: usize,
@@ -26,6 +28,7 @@ pub struct Simulation {
     moves: FxHashMap<usize, Vec<usize>>, // Destination index, Indexes of particles that want to move there
     sim_info: SimInfo,
     pub print_debug: bool,
+    pub thread_count: usize,
 }
 
 impl Simulation {
@@ -38,6 +41,7 @@ impl Simulation {
             moves: FxHashMap::default(),
             sim_info: SimInfo::new(),
             print_debug: false,
+            thread_count: DEFAULT_THREAD_COUNT,
         }
     }
 
@@ -113,9 +117,38 @@ impl Simulation {
     }
 
     pub fn simulate_step(&mut self) -> () {
-        self.find_moves();
-        self.apply_moves();
+        // Multithread finding of the moves
+        // Create a thread scope
+        self.moves = thread::scope(|scope| {
+            let mut handles = Vec::new();
+            let part_size = (self.width * self.height) / self.thread_count;
 
+            for i in 0..1 {
+                let start = i * part_size;
+                let end = if i == self.thread_count - 1 {
+                    self.width * self.height // ensure the last chunk goes to the end
+                } else {
+                    (i + 1) * part_size
+                };
+
+                let closure = {
+                    let (start, end, slf) = (start, end, &self);
+                    move || slf.find_moves(start, end)
+                };
+
+                // Spawn threads for each part
+                handles.push(scope.spawn(closure));
+            }
+
+            let scoped_join_handle = handles.pop().unwrap();
+            let partial_moves = scoped_join_handle.join().unwrap();
+
+            println!("{}", partial_moves.len());
+
+            partial_moves
+        });
+
+        self.apply_moves();
         // Print simulation informations.
         if self.print_debug {
             self.print_sim_info();
@@ -127,8 +160,10 @@ impl Simulation {
 
 impl Simulation {
     /// Finds desired moves for each particle
-    fn find_moves(&mut self) -> () {
-        for i in 0..(self.width * self.height) {
+    fn find_moves(&self, start: usize, end: usize) -> FxHashMap<usize, Vec<usize>> {
+        let mut moves = FxHashMap::default();
+
+        for i in start..end {
             let opt = &self.particles[i];
 
             match opt {
@@ -147,22 +182,25 @@ impl Simulation {
                         // Convert to index and try to move
                         let new_index = self.offset_to_index(&new_offset);
                         if self.particles[new_index].is_none() {
-                            self.add_move(i, new_index);
+                            // Add the value to moves map
+                            Self::add_move(&mut moves, i, new_index);
                             break;
                         }
                     }
                 }
             }
         }
+
+        moves
     }
 
     /// Adds a move to the moves map
-    fn add_move(&mut self, from: usize, to: usize) -> () {
-        if self.moves.contains_key(&to) {
+    fn add_move(moves_map: &mut FxHashMap<usize, Vec<usize>>, from: usize, to: usize) -> () {
+        if moves_map.contains_key(&to) {
             // Safe to unwrap as we checked for the key
-            self.moves.get_mut(&to).unwrap().push(from);
+            moves_map.get_mut(&to).unwrap().push(from);
         } else {
-            self.moves.insert(to, vec![from]);
+            moves_map.insert(to, vec![from]);
         }
     }
 
