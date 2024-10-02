@@ -15,7 +15,7 @@ const WIDTH: usize = 300;
 const HEIGHT: usize = 300;
 const LOGICAL_SCALE: usize = 2;
 const INDICATOR_SIZE: usize = 10;
-const BRUSH_SIZE: usize = 20;
+const BRUSH_SIZE: usize = 10;
 
 fn main() {
     let mut frame = Frame::new_with_scale(WIDTH, HEIGHT, LOGICAL_SCALE);
@@ -33,6 +33,7 @@ fn main() {
     // window.set_target_fps(30);
 
     let mut simulation = Simulation::new(WIDTH, HEIGHT);
+    simulation.print_debug = true;
 
     let unique_particles = vec![Particle::sand, Particle::water, Particle::rock];
     let indicator_particles: Vec<Particle> = unique_particles.iter().map(|p| p()).collect();
@@ -41,6 +42,7 @@ fn main() {
     let mut cur_time = SystemTime::now();
     let mut last_time = cur_time;
     let mut fps_counter = 0;
+    let mut avg_fps = 0;
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
         cur_time = SystemTime::now();
@@ -56,11 +58,13 @@ fn main() {
                     let (log_x, log_y) = frame.real_pos_to_logical(x as usize, y as usize);
                     let center = Offset::new(log_x as i32, log_y as i32);
 
-                    for off in get_offsets_for_square(&center, BRUSH_SIZE) {
-                        simulation.add_particle(&off, unique_particles[index]());
+                    if BRUSH_SIZE == 1 {
+                        simulation.add_particle(&center, unique_particles[index]());
+                    } else {
+                        for off in get_offsets_for_square(&center, BRUSH_SIZE) {
+                            simulation.add_particle(&off, unique_particles[index]());
+                        }
                     }
-
-                    // simulation.add_particle(&center, unique_particles[index]());
                 }
                 None => {}
             }
@@ -86,10 +90,11 @@ fn main() {
         // Print FPS
         fps_counter += 1;
         if cur_time.duration_since(last_time).unwrap().as_secs_f32() >= 1.0 {
-            println!("FPS: {}", fps_counter);
+            avg_fps = fps_counter;
             fps_counter = 0;
             last_time = cur_time;
         }
+        println!("FPS: {}", avg_fps);
 
         draw_ui_to_frame(&mut frame, &indicator_particles[index]);
 
