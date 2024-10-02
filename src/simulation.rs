@@ -65,11 +65,11 @@ impl Simulation {
         if self.particles[index].is_none() {
             self.particles[index] = Some(particle);
 
+            // Update Sim Info
+            self.sim_info.particle_count += 1;
+
             return true;
         }
-
-        // Update Sim Info
-        self.sim_info.particle_count += 1;
 
         false
     }
