@@ -150,6 +150,7 @@ impl Simulation {
                     (i + 1) * chunk_size
                 };
 
+                // Create closure that the threads will run
                 let closure = {
                     let (start, end) = (start, end);
                     let slf = Arc::clone(&self_rc);
@@ -160,6 +161,7 @@ impl Simulation {
                 handles.push(scope.spawn(closure));
             }
 
+            // Join together information collected by the threads
             let mut final_moves = FxHashMap::default();
             for _ in 0..self.thread_count {
                 let scoped_join_handle = handles.pop().unwrap();
@@ -170,6 +172,7 @@ impl Simulation {
                 }
             }
 
+            // Return all the moves
             final_moves
         });
     }
