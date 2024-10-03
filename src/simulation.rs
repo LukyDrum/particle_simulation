@@ -1,6 +1,6 @@
 use rand::Rng;
 use rustc_hash::FxHashMap;
-use std::thread;
+use std::{sync::Arc, thread};
 
 use crate::{frame::Frame, offset::Offset, particle::Particle};
 
@@ -18,7 +18,7 @@ impl SimInfo {
     }
 }
 
-const DEFAULT_THREAD_COUNT: usize = 8;
+const DEFAULT_THREAD_COUNT: usize = 16;
 
 pub struct Simulation {
     width: usize,
@@ -117,61 +117,7 @@ impl Simulation {
     }
 
     pub fn simulate_step(&mut self) -> () {
-        // Multithread finding of the moves
-        // Create a thread scope
-        self.moves = thread::scope(|scope| {
-            // This will hold thread handles
-            // let mut handles = Vec::new();
-            // This tells the size of each chunk for a thread
-            let chunk_size = (self.width * self.height) / self.thread_count;
-
-            // Iterate over threads
-            /*
-            for i in 0..1 {
-                let start = i * chunk_size;
-                // Define the end for each chunk
-                let end = if i == self.thread_count - 1 {
-                    self.width * self.height // ensure the last chunk goes to the end
-                } else {
-                    (i + 1) * chunk_size
-                };
-
-                let closure = {
-                    let (start, end, slf) = (start, end, &self);
-                    move || slf.find_moves(0, end)
-                };
-
-                // Spawn threads for each part
-                handles.push(scope.spawn(closure));
-            }
-            */
-
-            // let scoped_join_handle = handles.pop().unwrap();
-            // let partial_moves = scoped_join_handle.join().unwrap();
-
-            let start = 0;
-            let end = self.width * self.height;
-            let closure = {
-                let (start, end, slf) = (start, end, &self);
-                move || slf.find_moves(start, end)
-            };
-            let handle = scope.spawn(closure);
-
-            // let mut final_moves: FxHashMap<usize, Vec<usize>> = FxHashMap::default();
-            let partial_moves = handle.join().unwrap();
-            let mut final_moves = FxHashMap::default();
-
-            for (to, froms) in partial_moves.iter() {
-                for f in froms {
-                    Self::add_move(&mut final_moves, *f, *to);
-                }
-            }
-
-            println!("{}", final_moves.len());
-
-            final_moves
-        });
-
+        self.find_moves_multithreaded();
         self.apply_moves();
         // Print simulation informations.
         if self.print_debug {
@@ -183,6 +129,52 @@ impl Simulation {
 }
 
 impl Simulation {
+    fn find_moves_multithreaded(&mut self) -> () {
+        // Multithread finding of the moves and store it in self
+        // Create a thread scope
+        self.moves = thread::scope(|scope| {
+            // This will hold thread handles
+            let mut handles = Vec::new();
+            // This tells the size of each chunk for a thread
+            let chunk_size = (self.width * self.height) / self.thread_count;
+
+            // Iterate over threads
+            let self_rc = Arc::new(&self);
+            for i in 0..self.thread_count {
+                let start = i * chunk_size;
+                // Define the end for each chunk
+                let end = if i == self.thread_count - 1 {
+                    self.width * self.height // ensure the last chunk goes to the end
+                } else {
+                    (i + 1) * chunk_size
+                };
+
+                let closure = {
+                    let (start, end) = (start, end);
+                    let slf = Arc::clone(&self_rc);
+                    move || slf.find_moves(start, end)
+                };
+
+                // Spawn threads for each part
+                handles.push(scope.spawn(closure));
+            }
+
+            let mut final_moves = FxHashMap::default();
+            for _ in 0..self.thread_count {
+                let scoped_join_handle = handles.pop().unwrap();
+                let partial_moves = scoped_join_handle.join().unwrap();
+
+                for (to, froms) in partial_moves.iter() {
+                    for f in froms {
+                        Self::add_move(&mut final_moves, *f, *to);
+                    }
+                }
+            }
+
+            final_moves
+        });
+    }
+
     /// Finds desired moves for each particle
     fn find_moves(&self, start: usize, end: usize) -> FxHashMap<usize, Vec<usize>> {
         let mut moves = FxHashMap::default();
