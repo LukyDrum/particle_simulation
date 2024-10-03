@@ -1,6 +1,6 @@
 use rand::Rng;
 use rustc_hash::FxHashMap;
-use std::{sync::Arc, thread};
+use std::{collections::LinkedList, sync::Arc, thread};
 
 use crate::{frame::Frame, offset::Offset, particle::Particle};
 
@@ -129,6 +129,7 @@ impl Simulation {
 }
 
 impl Simulation {
+    /// This will find the possible moves and store them in "self" using multiple threads. This method calls "find_moves".
     fn find_moves_multithreaded(&mut self) -> () {
         // Multithread finding of the moves and store it in self
         // Create a thread scope
@@ -164,10 +165,8 @@ impl Simulation {
                 let scoped_join_handle = handles.pop().unwrap();
                 let partial_moves = scoped_join_handle.join().unwrap();
 
-                for (to, froms) in partial_moves.iter() {
-                    for f in froms {
-                        Self::add_move(&mut final_moves, *f, *to);
-                    }
+                for (from, to) in partial_moves.iter() {
+                    Self::add_move(&mut final_moves, *from, *to);
                 }
             }
 
@@ -176,8 +175,10 @@ impl Simulation {
     }
 
     /// Finds desired moves for each particle
-    fn find_moves(&self, start: usize, end: usize) -> FxHashMap<usize, Vec<usize>> {
-        let mut moves = FxHashMap::default();
+    fn find_moves(&self, start: usize, end: usize) -> LinkedList<(usize, usize)> {
+        // Use list for more efficiency. These moves still has to be copied over to the total moves.
+        // Contains tuples (from, to)
+        let mut moves_list: LinkedList<(usize, usize)> = LinkedList::new();
 
         for i in start..end {
             let opt = &self.particles[i];
@@ -198,8 +199,8 @@ impl Simulation {
                         // Convert to index and try to move
                         let new_index = self.offset_to_index(&new_offset);
                         if self.particles[new_index].is_none() {
-                            // Add the value to moves map
-                            Self::add_move(&mut moves, i, new_index);
+                            // Add the value to moves list
+                            moves_list.push_back((i, new_index));
                             break;
                         }
                     }
@@ -207,7 +208,7 @@ impl Simulation {
             }
         }
 
-        moves
+        moves_list
     }
 
     /// Adds a move to the moves map
