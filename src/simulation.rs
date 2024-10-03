@@ -120,32 +120,56 @@ impl Simulation {
         // Multithread finding of the moves
         // Create a thread scope
         self.moves = thread::scope(|scope| {
-            let mut handles = Vec::new();
-            let part_size = (self.width * self.height) / self.thread_count;
+            // This will hold thread handles
+            // let mut handles = Vec::new();
+            // This tells the size of each chunk for a thread
+            let chunk_size = (self.width * self.height) / self.thread_count;
 
+            // Iterate over threads
+            /*
             for i in 0..1 {
-                let start = i * part_size;
+                let start = i * chunk_size;
+                // Define the end for each chunk
                 let end = if i == self.thread_count - 1 {
                     self.width * self.height // ensure the last chunk goes to the end
                 } else {
-                    (i + 1) * part_size
+                    (i + 1) * chunk_size
                 };
 
                 let closure = {
                     let (start, end, slf) = (start, end, &self);
-                    move || slf.find_moves(start, end)
+                    move || slf.find_moves(0, end)
                 };
 
                 // Spawn threads for each part
                 handles.push(scope.spawn(closure));
             }
+            */
 
-            let scoped_join_handle = handles.pop().unwrap();
-            let partial_moves = scoped_join_handle.join().unwrap();
+            // let scoped_join_handle = handles.pop().unwrap();
+            // let partial_moves = scoped_join_handle.join().unwrap();
 
-            println!("{}", partial_moves.len());
+            let start = 0;
+            let end = self.width * self.height;
+            let closure = {
+                let (start, end, slf) = (start, end, &self);
+                move || slf.find_moves(start, end)
+            };
+            let handle = scope.spawn(closure);
 
-            partial_moves
+            // let mut final_moves: FxHashMap<usize, Vec<usize>> = FxHashMap::default();
+            let partial_moves = handle.join().unwrap();
+            let mut final_moves = FxHashMap::default();
+
+            for (to, froms) in partial_moves.iter() {
+                for f in froms {
+                    Self::add_move(&mut final_moves, *f, *to);
+                }
+            }
+
+            println!("{}", final_moves.len());
+
+            final_moves
         });
 
         self.apply_moves();
