@@ -18,6 +18,12 @@ impl SimInfo {
     }
 }
 
+#[derive(Clone, Copy)]
+enum SimMove {
+    Move(usize),   // FROM where
+    Switch(usize), // FROM
+}
+
 const DEFAULT_THREAD_COUNT: usize = 32;
 
 pub struct Simulation {
@@ -25,7 +31,7 @@ pub struct Simulation {
     height: usize,
     bg_color: u32,
     particles: Vec<Option<Particle>>,
-    moves: FxHashMap<usize, Vec<usize>>, // Destination index, Indexes of particles that want to move there
+    moves: FxHashMap<usize, Vec<SimMove>>, // Destination index, Moves to be done ending at that index
     sim_info: SimInfo,
     pub print_debug: bool,
     pub thread_count: usize,
@@ -167,8 +173,8 @@ impl Simulation {
                 let scoped_join_handle = handles.pop().unwrap();
                 let partial_moves = scoped_join_handle.join().unwrap();
 
-                for (from, to) in partial_moves.iter() {
-                    Self::add_move(&mut final_moves, *from, *to);
+                for (to, sim_move) in partial_moves.iter() {
+                    Self::add_move(&mut final_moves, *to, *sim_move);
                 }
             }
 
@@ -178,10 +184,10 @@ impl Simulation {
     }
 
     /// Finds desired moves for each particle
-    fn find_moves_in_range(&self, start: usize, end: usize) -> LinkedList<(usize, usize)> {
+    fn find_moves_in_range(&self, start: usize, end: usize) -> LinkedList<(usize, SimMove)> {
         // Use list for more efficiency. These moves still has to be copied over to the total moves.
         // Contains tuples (from, to)
-        let mut moves_list: LinkedList<(usize, usize)> = LinkedList::new();
+        let mut moves_list: LinkedList<(usize, SimMove)> = LinkedList::new();
 
         // Look at the given range
         for i in start..end {
@@ -202,9 +208,17 @@ impl Simulation {
 
                         // Convert to index and try to move
                         let new_index = self.offset_to_index(&new_offset);
+                        // Try for SimMove::MOVE
                         if self.particles[new_index].is_none() {
                             // Add the value to moves list
-                            moves_list.push_back((i, new_index));
+                            moves_list.push_back((new_index, SimMove::Move(i)));
+                            break;
+                        }
+                        // Try for SimMove::SWITCH
+                        // Safe to unwrap, we already checked that it is not noe
+                        if self.particles[new_index].unwrap().density < p.density {
+                            // Add the value to moves list
+                            moves_list.push_back((new_index, SimMove::Switch(i)));
                             break;
                         }
                     }
@@ -216,25 +230,40 @@ impl Simulation {
     }
 
     /// Adds a move to the moves map
-    fn add_move(moves_map: &mut FxHashMap<usize, Vec<usize>>, from: usize, to: usize) -> () {
+    fn add_move(
+        moves_map: &mut FxHashMap<usize, Vec<SimMove>>,
+        to: usize,
+        sim_move: SimMove,
+    ) -> () {
         if moves_map.contains_key(&to) {
             // Safe to unwrap as we checked for the key
-            moves_map.get_mut(&to).unwrap().push(from);
+            moves_map.get_mut(&to).unwrap().push(sim_move);
         } else {
-            moves_map.insert(to, vec![from]);
+            moves_map.insert(to, vec![sim_move]);
         }
     }
 
     /// Apply the moves in moves map
     fn apply_moves(&mut self) -> () {
-        for (to, from_vec) in self.moves.iter() {
-            let rand_index = rand::thread_rng().gen_range(0..from_vec.len());
-            let chosen_from = from_vec[rand_index];
+        for (to, move_vec) in self.moves.iter() {
+            let rand_index = rand::thread_rng().gen_range(0..move_vec.len());
+            let chosen_move = move_vec[rand_index];
 
-            // Move the particle
-            self.particles[*to] = self.particles[chosen_from];
-            // Free the old sport
-            self.particles[chosen_from] = None;
+            match chosen_move {
+                SimMove::Move(from) => {
+                    // Move the particle
+                    self.particles[*to] = self.particles[from];
+                    // Free the old sport
+                    self.particles[from] = None;
+                }
+                SimMove::Switch(with) => {
+                    // Create a copy of one of the particles
+                    let particle_on_to = self.particles[*to];
+                    // Switch the particles on "to" and "with"
+                    self.particles[*to] = self.particles[with];
+                    self.particles[with] = particle_on_to;
+                }
+            }
 
             // Update Sim Info
             self.sim_info.moves_made_last_frame += 1;
