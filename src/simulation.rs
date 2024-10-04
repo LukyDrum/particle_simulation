@@ -1,6 +1,7 @@
 use rand::Rng;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use rustc_hash::FxHashMap;
-use std::{collections::LinkedList, sync::Arc, thread};
+use std::collections::LinkedList;
 
 use crate::{frame::Frame, offset::Offset, particle::Particle};
 
@@ -139,14 +140,10 @@ impl Simulation {
     fn find_moves_multithreaded(&mut self) -> () {
         // Multithread finding of the moves and store it in self
         // Create a thread scope
-        self.moves = thread::scope(|scope| {
-            // This will hold thread handles
-            let mut handles = Vec::new();
-            // This tells the size of each chunk for a thread
-            let chunk_size = (self.width * self.height) / self.thread_count;
+        self.moves = {
+            let mut start_end_tuples: LinkedList<(usize, usize)> = LinkedList::new();
 
-            // Iterate over threads
-            let self_rc = Arc::new(&self);
+            let chunk_size = (self.width * self.height) / self.thread_count;
             for i in 0..self.thread_count {
                 let start = i * chunk_size;
                 // Define the end for each chunk
@@ -156,31 +153,23 @@ impl Simulation {
                     (i + 1) * chunk_size
                 };
 
-                // Create closure that the threads will run
-                let closure = {
-                    let (start, end) = (start, end);
-                    let slf = Arc::clone(&self_rc);
-                    move || slf.find_moves_in_range(start, end)
-                };
-
-                // Spawn threads for each part
-                handles.push(scope.spawn(closure));
+                start_end_tuples.push_back((start, end));
             }
 
-            // Join together information collected by the threads
             let mut final_moves = FxHashMap::default();
-            for _ in 0..self.thread_count {
-                let scoped_join_handle = handles.pop().unwrap();
-                let partial_moves = scoped_join_handle.join().unwrap();
+            let vec_of_partial_moves: Vec<LinkedList<(usize, SimMove)>> = start_end_tuples
+                .par_iter()
+                .map(|(start, end)| self.find_moves_in_range(*start, *end))
+                .collect();
 
-                for (to, sim_move) in partial_moves.iter() {
+            for part in vec_of_partial_moves {
+                for (to, sim_move) in part.iter() {
                     Self::add_move(&mut final_moves, *to, *sim_move);
                 }
             }
 
-            // Return all the moves
             final_moves
-        });
+        };
     }
 
     /// Finds desired moves for each particle
