@@ -25,8 +25,6 @@ enum SimMove {
     Switch(usize), // FROM
 }
 
-const DEFAULT_THREAD_COUNT: usize = 32;
-
 pub struct Simulation {
     width: usize,
     height: usize,
@@ -35,7 +33,6 @@ pub struct Simulation {
     moves: FxHashMap<usize, Vec<SimMove>>, // Destination index, Moves to be done ending at that index
     sim_info: SimInfo,
     pub print_debug: bool,
-    pub thread_count: usize,
 }
 
 impl Simulation {
@@ -48,7 +45,6 @@ impl Simulation {
             moves: FxHashMap::default(),
             sim_info: SimInfo::new(),
             print_debug: false,
-            thread_count: DEFAULT_THREAD_COUNT,
         }
     }
 
@@ -139,37 +135,35 @@ impl Simulation {
     /// This will find the possible moves and store them in "self" using multiple threads. This method calls "find_moves".
     fn find_moves_multithreaded(&mut self) -> () {
         // Multithread finding of the moves and store it in self
-        // Create a thread scope
-        self.moves = {
-            let mut start_end_tuples: LinkedList<(usize, usize)> = LinkedList::new();
 
-            let chunk_size = (self.width * self.height) / self.thread_count;
-            for i in 0..self.thread_count {
-                let start = i * chunk_size;
-                // Define the end for each chunk
-                let end = if i == self.thread_count - 1 {
-                    self.width * self.height // ensure the last chunk goes to the end
-                } else {
-                    (i + 1) * chunk_size
-                };
+        // Find the start and end points for threads
+        let mut start_end_tuples: LinkedList<(usize, usize)> = LinkedList::new();
+        let thread_count = rayon::current_num_threads();
+        let chunk_size = (self.width * self.height) / thread_count;
+        for i in 0..thread_count {
+            let start = i * chunk_size;
+            // Define the end for each chunk
+            let end = if i == thread_count - 1 {
+                self.width * self.height // ensure the last chunk goes to the end
+            } else {
+                (i + 1) * chunk_size
+            };
 
-                start_end_tuples.push_back((start, end));
+            start_end_tuples.push_back((start, end));
+        }
+
+        // Using rayon find moves for each start end tuple
+        let vec_of_partial_moves: Vec<LinkedList<(usize, SimMove)>> = start_end_tuples
+            .par_iter()
+            .map(|(start, end)| self.find_moves_in_range(*start, *end))
+            .collect();
+
+        // Join the moves into a map
+        for part in vec_of_partial_moves {
+            for (to, sim_move) in part.iter() {
+                self.add_move(*to, *sim_move);
             }
-
-            let mut final_moves = FxHashMap::default();
-            let vec_of_partial_moves: Vec<LinkedList<(usize, SimMove)>> = start_end_tuples
-                .par_iter()
-                .map(|(start, end)| self.find_moves_in_range(*start, *end))
-                .collect();
-
-            for part in vec_of_partial_moves {
-                for (to, sim_move) in part.iter() {
-                    Self::add_move(&mut final_moves, *to, *sim_move);
-                }
-            }
-
-            final_moves
-        };
+        }
     }
 
     /// Finds desired moves for each particle
@@ -219,16 +213,12 @@ impl Simulation {
     }
 
     /// Adds a move to the moves map
-    fn add_move(
-        moves_map: &mut FxHashMap<usize, Vec<SimMove>>,
-        to: usize,
-        sim_move: SimMove,
-    ) -> () {
-        if moves_map.contains_key(&to) {
+    fn add_move(&mut self, to: usize, sim_move: SimMove) -> () {
+        if self.moves.contains_key(&to) {
             // Safe to unwrap as we checked for the key
-            moves_map.get_mut(&to).unwrap().push(sim_move);
+            self.moves.get_mut(&to).unwrap().push(sim_move);
         } else {
-            moves_map.insert(to, vec![sim_move]);
+            self.moves.insert(to, vec![sim_move]);
         }
     }
 
