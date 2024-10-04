@@ -11,11 +11,11 @@ use offset::Offset;
 use particle::Particle;
 use simulation::Simulation;
 
-const WIDTH: usize = 300;
-const HEIGHT: usize = 300;
-const LOGICAL_SCALE: usize = 2;
-const INDICATOR_SIZE: usize = 10;
-const BRUSH_SIZE: usize = 10;
+const WIDTH: usize = 150;
+const HEIGHT: usize = 150;
+const LOGICAL_SCALE: usize = 4;
+const INDICATOR_SIZE: usize = 5;
+const BRUSH_SIZE: usize = 6;
 
 fn main() {
     let mut frame = Frame::new_with_scale(WIDTH, HEIGHT, LOGICAL_SCALE);
