@@ -18,7 +18,7 @@ impl SimInfo {
     }
 }
 
-const DEFAULT_THREAD_COUNT: usize = 16;
+const DEFAULT_THREAD_COUNT: usize = 32;
 
 pub struct Simulation {
     width: usize,
