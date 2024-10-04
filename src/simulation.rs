@@ -154,7 +154,7 @@ impl Simulation {
                 let closure = {
                     let (start, end) = (start, end);
                     let slf = Arc::clone(&self_rc);
-                    move || slf.find_moves(start, end)
+                    move || slf.find_moves_in_range(start, end)
                 };
 
                 // Spawn threads for each part
@@ -178,11 +178,12 @@ impl Simulation {
     }
 
     /// Finds desired moves for each particle
-    fn find_moves(&self, start: usize, end: usize) -> LinkedList<(usize, usize)> {
+    fn find_moves_in_range(&self, start: usize, end: usize) -> LinkedList<(usize, usize)> {
         // Use list for more efficiency. These moves still has to be copied over to the total moves.
         // Contains tuples (from, to)
         let mut moves_list: LinkedList<(usize, usize)> = LinkedList::new();
 
+        // Look at the given range
         for i in start..end {
             let opt = &self.particles[i];
 
