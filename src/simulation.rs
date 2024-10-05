@@ -1,5 +1,8 @@
 use rand::Rng;
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use rayon::{
+    iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator},
+    slice::ParallelSliceMut,
+};
 use rustc_hash::FxHashMap;
 use std::collections::LinkedList;
 
@@ -49,18 +52,32 @@ impl Simulation {
     }
 
     pub fn draw_to_frame(&self, frame: &mut Frame) -> () {
-        for y in 0..self.height {
-            for x in 0..self.width {
-                let opt = &self.particles[y * self.width + x];
+        let logical_pixel_size = frame.logical_scale;
+        let real_row_width = frame.width();
+        let chunk_size = real_row_width * frame.logical_scale; // 1 row of log. pixel correspond to this much of real pixels
+        let buffer = &mut frame.buffer;
 
-                let color = match opt {
-                    Some(p) => p.color,
-                    None => self.bg_color,
-                };
+        buffer
+            .par_chunks_mut(chunk_size)
+            .enumerate()
+            .for_each(|(row, chunk)| {
+                // Draw logical pixels
+                for col in (0..real_row_width).step_by(logical_pixel_size) {
+                    let particle_index = row * self.height + (col / logical_pixel_size);
+                    let opt = &self.particles[particle_index];
+                    let color = match opt {
+                        Some(p) => p.color,
+                        None => self.bg_color,
+                    };
 
-                let _ = frame.draw_pixel(x, y, color);
-            }
-        }
+                    for sub_col in 0..logical_pixel_size {
+                        for sub_row in 0..logical_pixel_size {
+                            let pixel_index = sub_row * real_row_width + col + sub_col;
+                            chunk[pixel_index] = color;
+                        }
+                    }
+                }
+            });
     }
 
     pub fn add_particle(&mut self, offset: &Offset, particle: Particle) -> bool {
