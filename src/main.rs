@@ -11,11 +11,11 @@ use offset::Offset;
 use particle::Particle;
 use simulation::Simulation;
 
-const WIDTH: usize = 300;
-const HEIGHT: usize = 300;
+const WIDTH: usize = 400;
+const HEIGHT: usize = 400;
 const LOGICAL_SCALE: usize = 2;
 const INDICATOR_SIZE: usize = 10;
-const BRUSH_SIZE: usize = 10;
+const BRUSH_SIZE: usize = 20;
 
 fn main() {
     let mut frame = Frame::new_with_scale(WIDTH, HEIGHT, LOGICAL_SCALE);
@@ -30,7 +30,7 @@ fn main() {
         panic!("{}", e);
     });
     // Limit to max ~30 fps update rate
-    // window.set_target_fps(30);
+    window.set_target_fps(32);
 
     let mut simulation = Simulation::new(WIDTH, HEIGHT);
     simulation.print_debug = true;

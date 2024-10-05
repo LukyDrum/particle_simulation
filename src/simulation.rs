@@ -1,6 +1,10 @@
-use std::collections::HashMap;
-
 use rand::Rng;
+use rayon::{
+    iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator},
+    slice::ParallelSliceMut,
+};
+use rustc_hash::FxHashMap;
+use std::collections::LinkedList;
 
 use crate::{frame::Frame, offset::Offset, particle::Particle};
 
@@ -18,12 +22,18 @@ impl SimInfo {
     }
 }
 
+#[derive(Clone, Copy)]
+enum SimMove {
+    Move(usize),   // FROM where
+    Switch(usize), // FROM
+}
+
 pub struct Simulation {
     width: usize,
     height: usize,
     bg_color: u32,
     particles: Vec<Option<Particle>>,
-    moves: HashMap<usize, Vec<usize>>, // Destination index, Indexes of particles that want to move there
+    moves: FxHashMap<usize, Vec<SimMove>>, // Destination index, Moves to be done ending at that index
     sim_info: SimInfo,
     pub print_debug: bool,
 }
@@ -35,25 +45,39 @@ impl Simulation {
             height,
             bg_color: 0x00000000,
             particles: vec![None; width * height],
-            moves: HashMap::new(),
+            moves: FxHashMap::default(),
             sim_info: SimInfo::new(),
             print_debug: false,
         }
     }
 
     pub fn draw_to_frame(&self, frame: &mut Frame) -> () {
-        for y in 0..self.height {
-            for x in 0..self.width {
-                let opt = &self.particles[y * self.width + x];
+        let logical_pixel_size = frame.logical_scale;
+        let real_row_width = frame.width();
+        let chunk_size = real_row_width * frame.logical_scale; // 1 row of log. pixel correspond to this much of real pixels
+        let buffer = &mut frame.buffer;
 
-                let color = match opt {
-                    Some(p) => p.color,
-                    None => self.bg_color,
-                };
+        buffer
+            .par_chunks_mut(chunk_size)
+            .enumerate()
+            .for_each(|(row, chunk)| {
+                // Draw logical pixels
+                for col in (0..real_row_width).step_by(logical_pixel_size) {
+                    let particle_index = row * self.height + (col / logical_pixel_size);
+                    let opt = &self.particles[particle_index];
+                    let color = match opt {
+                        Some(p) => p.color,
+                        None => self.bg_color,
+                    };
 
-                let _ = frame.draw_pixel(x, y, color);
-            }
-        }
+                    for sub_col in 0..logical_pixel_size {
+                        for sub_row in 0..logical_pixel_size {
+                            let pixel_index = sub_row * real_row_width + col + sub_col;
+                            chunk[pixel_index] = color;
+                        }
+                    }
+                }
+            });
     }
 
     pub fn add_particle(&mut self, offset: &Offset, particle: Particle) -> bool {
@@ -113,9 +137,8 @@ impl Simulation {
     }
 
     pub fn simulate_step(&mut self) -> () {
-        self.find_moves();
+        self.find_moves_multithreaded();
         self.apply_moves();
-
         // Print simulation informations.
         if self.print_debug {
             self.print_sim_info();
@@ -126,9 +149,48 @@ impl Simulation {
 }
 
 impl Simulation {
+    /// This will find the possible moves and store them in "self" using multiple threads. This method calls "find_moves".
+    fn find_moves_multithreaded(&mut self) -> () {
+        // Multithread finding of the moves and store it in self
+
+        // Find the start and end points for threads
+        let mut start_end_tuples: LinkedList<(usize, usize)> = LinkedList::new();
+        let thread_count = rayon::current_num_threads();
+        let chunk_size = (self.width * self.height) / thread_count;
+        for i in 0..thread_count {
+            let start = i * chunk_size;
+            // Define the end for each chunk
+            let end = if i == thread_count - 1 {
+                self.width * self.height // ensure the last chunk goes to the end
+            } else {
+                (i + 1) * chunk_size
+            };
+
+            start_end_tuples.push_back((start, end));
+        }
+
+        // Using rayon find moves for each start end tuple
+        let vec_of_partial_moves: Vec<LinkedList<(usize, SimMove)>> = start_end_tuples
+            .par_iter()
+            .map(|(start, end)| self.find_moves_in_range(*start, *end))
+            .collect();
+
+        // Join the moves into a map
+        for part in vec_of_partial_moves {
+            for (to, sim_move) in part.iter() {
+                self.add_move(*to, *sim_move);
+            }
+        }
+    }
+
     /// Finds desired moves for each particle
-    fn find_moves(&mut self) -> () {
-        for i in 0..(self.width * self.height) {
+    fn find_moves_in_range(&self, start: usize, end: usize) -> LinkedList<(usize, SimMove)> {
+        // Use list for more efficiency. These moves still has to be copied over to the total moves.
+        // Contains tuples (from, to)
+        let mut moves_list: LinkedList<(usize, SimMove)> = LinkedList::new();
+
+        // Look at the given range
+        for i in start..end {
             let opt = &self.particles[i];
 
             match opt {
@@ -146,36 +208,58 @@ impl Simulation {
 
                         // Convert to index and try to move
                         let new_index = self.offset_to_index(&new_offset);
+                        // Try for SimMove::MOVE
                         if self.particles[new_index].is_none() {
-                            self.add_move(i, new_index);
+                            // Add the value to moves list
+                            moves_list.push_back((new_index, SimMove::Move(i)));
+                            break;
+                        }
+                        // Try for SimMove::SWITCH
+                        // Safe to unwrap, we already checked that it is not noe
+                        if self.particles[new_index].unwrap().density < p.density {
+                            // Add the value to moves list
+                            moves_list.push_back((new_index, SimMove::Switch(i)));
                             break;
                         }
                     }
                 }
             }
         }
+
+        moves_list
     }
 
     /// Adds a move to the moves map
-    fn add_move(&mut self, from: usize, to: usize) -> () {
+    fn add_move(&mut self, to: usize, sim_move: SimMove) -> () {
         if self.moves.contains_key(&to) {
             // Safe to unwrap as we checked for the key
-            self.moves.get_mut(&to).unwrap().push(from);
+            self.moves.get_mut(&to).unwrap().push(sim_move);
         } else {
-            self.moves.insert(to, vec![from]);
+            self.moves.insert(to, vec![sim_move]);
         }
     }
 
     /// Apply the moves in moves map
     fn apply_moves(&mut self) -> () {
-        for (to, from_vec) in self.moves.iter() {
-            let rand_index = rand::thread_rng().gen_range(0..from_vec.len());
-            let chosen_from = from_vec[rand_index];
+        for (to, move_vec) in self.moves.iter() {
+            let rand_index = rand::thread_rng().gen_range(0..move_vec.len());
+            let chosen_move = move_vec[rand_index];
 
-            // Move the particle
-            self.particles[*to] = self.particles[chosen_from];
-            // Free the old sport
-            self.particles[chosen_from] = None;
+            match chosen_move {
+                SimMove::Move(from) => {
+                    // Move the particle
+                    self.particles[*to] = self.particles[from];
+                    // Free the old sport
+                    self.particles[from] = None;
+                }
+                SimMove::Switch(with) => {
+                    // Create a copy of one of the particles
+                    let particle_on_to = self.particles[*to];
+                    // Switch the particles on "to" and "with"
+                    self.particles[*to] = self.particles[with];
+                    self.particles[with] = particle_on_to;
+                }
+            }
 
             // Update Sim Info
             self.sim_info.moves_made_last_frame += 1;
