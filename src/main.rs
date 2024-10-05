@@ -30,7 +30,7 @@ fn main() {
         panic!("{}", e);
     });
     // Limit to max ~30 fps update rate
-    window.set_target_fps(32);
+    window.set_target_fps(60);
 
     let mut simulation = Simulation::new(WIDTH, HEIGHT);
     simulation.print_debug = true;
