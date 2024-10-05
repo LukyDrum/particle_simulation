@@ -26,6 +26,7 @@ impl SimInfo {
 enum SimMove {
     Move(usize),   // FROM where
     Switch(usize), // FROM
+    Stop,          // Happens when particle with velocity stops in place
 }
 
 pub struct Simulation {
@@ -201,10 +202,11 @@ impl Simulation {
 
                 // Particles current offset
                 let p_offset = self.index_to_offset(i);
+                let mut did_move = false;
+                for max_offset in p.get_max_offsets() {
+                    // Find the maximum offset to which the particle can move based on its velocity
+                    let new_offset = self.find_max_offset(p_offset, max_offset);
 
-                for offset in p.get_offsets() {
-                    // Create and check new particle offset
-                    let new_offset = p_offset + offset;
                     if !self.is_within(&new_offset) {
                         continue;
                     }
@@ -215,6 +217,7 @@ impl Simulation {
                     if self.particles[new_index].is_none() {
                         // Add the value to moves list
                         moves_list.push_back((new_index, SimMove::Move(i)));
+                        did_move = true;
                         break;
                     }
                     // Try for SimMove::SWITCH
@@ -222,8 +225,13 @@ impl Simulation {
                     if self.particles[new_index].unwrap().density < p.density {
                         // Add the value to moves list
                         moves_list.push_back((new_index, SimMove::Switch(i)));
+                        did_move = true;
                         break;
                     }
+                }
+
+                if !did_move && p.velocity > 1.0 {
+                    moves_list.push_back((i, SimMove::Stop));
                 }
             }
         }
@@ -248,9 +256,12 @@ impl Simulation {
             let chosen_move = move_vec[rand_index];
 
             match chosen_move {
+                // Move to spot and increase velocity, as if by gravity
                 SimMove::Move(from) => {
+                    let mut particle = self.particles[from].unwrap(); // Safe to unwrap, we know the particle is the based on the move
+                    particle.increment_velocity();
                     // Move the particle
-                    self.particles[*to] = self.particles[from];
+                    self.particles[*to] = Some(particle);
                     // Free the old sport
                     self.particles[from] = None;
                 }
@@ -260,6 +271,14 @@ impl Simulation {
                     // Switch the particles on "to" and "with"
                     self.particles[*to] = self.particles[with];
                     self.particles[with] = particle_on_to;
+                }
+                SimMove::Stop => {
+                    let mut opt = self.particles[*to];
+                    if let Some(p) = &mut opt {
+                        p.reset_velocity();
+                    }
+                    // Move the particle
+                    self.particles[*to] = opt;
                 }
             }
 
@@ -274,6 +293,30 @@ impl Simulation {
 
         // Update Sim Info
         self.sim_info.moves_made_last_frame = 0;
+    }
+
+    fn find_max_offset(&self, p_offset: Offset, max_offset: Offset) -> Offset {
+        // Get all the offsets between
+        let max_pos = p_offset + max_offset;
+        let offsets_between = p_offset.between(&max_pos);
+
+        // Check if there is any obstacle, return the one furthest away but before an obstacle
+        for i in 1..offsets_between.len() {
+            let offset = offsets_between[i];
+            // Check bounds
+            if !self.is_within(&offset) {
+                return offsets_between[i - 1];
+            }
+
+            let index = self.offset_to_index(&offset);
+            let opt = &self.particles[index];
+
+            if opt.is_some() {
+                return offsets_between[i - 1];
+            }
+        }
+
+        max_pos
     }
 
     fn is_within(&self, offset: &Offset) -> bool {
