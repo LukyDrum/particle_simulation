@@ -26,3 +26,14 @@ impl ops::Add for Offset {
         }
     }
 }
+
+impl ops::Mul<i32> for Offset {
+    type Output = Offset;
+
+    fn mul(self, rhs: i32) -> Self::Output {
+        Offset {
+            x: self.x * rhs,
+            y: self.y * rhs,
+        }
+    }
+}
