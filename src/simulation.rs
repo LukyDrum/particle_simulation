@@ -196,6 +196,11 @@ impl Simulation {
             match opt {
                 None => {}
                 Some(p) => {
+                    // If the particle is not moveable, we can just skip it
+                    if !p.is_moveable {
+                        continue;
+                    }
+
                     // Particles current offset
                     let p_offset = self.index_to_offset(i);
 
