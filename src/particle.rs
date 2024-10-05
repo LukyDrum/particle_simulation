@@ -82,7 +82,7 @@ impl Particle {
         // Add primary, A and B offsets multiplied by the velocity in order
         let mut offsets = Vec::with_capacity(self.velocity as usize * 3); // By 3 because there are 3 base offsets
         for base in [self.primary_offset, offset_a, offset_b] {
-            for i in 1..(self.velocity as i32) {
+            for i in 1..=(self.velocity as i32) {
                 offsets.push(base * i);
             }
         }
