@@ -193,39 +193,36 @@ impl Simulation {
         for i in start..end {
             let opt = &self.particles[i];
 
-            match opt {
-                None => {}
-                Some(p) => {
-                    // If the particle is not moveable, we can just skip it
-                    if !p.is_moveable {
+            if let Some(p) = opt {
+                // If the particle is not moveable, we can just skip it
+                if !p.is_moveable {
+                    continue;
+                }
+
+                // Particles current offset
+                let p_offset = self.index_to_offset(i);
+
+                for offset in p.get_offsets() {
+                    // Create and check new particle offset
+                    let new_offset = p_offset + offset;
+                    if !self.is_within(&new_offset) {
                         continue;
                     }
 
-                    // Particles current offset
-                    let p_offset = self.index_to_offset(i);
-
-                    for offset in p.get_offsets() {
-                        // Create and check new particle offset
-                        let new_offset = p_offset + offset;
-                        if !self.is_within(&new_offset) {
-                            continue;
-                        }
-
-                        // Convert to index and try to move
-                        let new_index = self.offset_to_index(&new_offset);
-                        // Try for SimMove::MOVE
-                        if self.particles[new_index].is_none() {
-                            // Add the value to moves list
-                            moves_list.push_back((new_index, SimMove::Move(i)));
-                            break;
-                        }
-                        // Try for SimMove::SWITCH
-                        // Safe to unwrap, we already checked that it is not noe
-                        if self.particles[new_index].unwrap().density < p.density {
-                            // Add the value to moves list
-                            moves_list.push_back((new_index, SimMove::Switch(i)));
-                            break;
-                        }
+                    // Convert to index and try to move
+                    let new_index = self.offset_to_index(&new_offset);
+                    // Try for SimMove::MOVE
+                    if self.particles[new_index].is_none() {
+                        // Add the value to moves list
+                        moves_list.push_back((new_index, SimMove::Move(i)));
+                        break;
+                    }
+                    // Try for SimMove::SWITCH
+                    // Safe to unwrap, we already checked that it is not noe
+                    if self.particles[new_index].unwrap().density < p.density {
+                        // Add the value to moves list
+                        moves_list.push_back((new_index, SimMove::Switch(i)));
+                        break;
                     }
                 }
             }
