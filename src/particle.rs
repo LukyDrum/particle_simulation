@@ -3,6 +3,7 @@ use rand::{random, thread_rng, Rng};
 use crate::offset::Offset;
 
 const DENSITY_MAX: u8 = 255;
+const DEFAULT_VELOCITY: f32 = 1.0;
 
 #[derive(Clone, Copy)]
 pub struct Particle {
@@ -11,6 +12,7 @@ pub struct Particle {
     /// Gasses are near to 0, Fluids around 128, Solid particles at 255.
     pub density: u8,
     pub is_moveable: bool,
+    pub velocity: f32,
     pub primary_offset: Offset,
     pub secondary_offsets: [Offset; 2],
 }
@@ -22,6 +24,7 @@ impl Particle {
             color: Self::get_near_color(0x00E0E02D),
             density: DENSITY_MAX,
             is_moveable: true,
+            velocity: DEFAULT_VELOCITY,
             primary_offset: Offset::new(0, 1),
             secondary_offsets: [Offset::new(-1, 1), Offset::new(1, 1)],
         }
@@ -32,6 +35,7 @@ impl Particle {
             color: Self::get_near_color(0x001BB2E0),
             density: 128,
             is_moveable: true,
+            velocity: DEFAULT_VELOCITY,
             primary_offset: Offset::new(0, 1),
             secondary_offsets: [Offset::new(-1, 0), Offset::new(1, 0)],
         }
@@ -42,6 +46,7 @@ impl Particle {
             color: Self::get_near_color(0x00909090),
             density: DENSITY_MAX,
             is_moveable: false,
+            velocity: DEFAULT_VELOCITY,
             primary_offset: Offset::zero(),
             secondary_offsets: [Offset::zero(), Offset::zero()],
         }
@@ -49,6 +54,10 @@ impl Particle {
 }
 
 impl Particle {
+    pub fn reset_velocity(&mut self) -> () {
+        self.velocity = DEFAULT_VELOCITY;
+    }
+
     pub fn get_offsets(&self) -> [Offset; 3] {
         // Randomly choose the first of the secondary offsets
         let a: usize;
