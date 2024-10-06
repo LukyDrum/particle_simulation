@@ -26,16 +26,8 @@ impl Offset {
         }
 
         // Find the direction of the difference - in case of difference of 0 we just leave a 1
-        let x_sign = if x_diff != 0 {
-            x_diff / x_diff.abs()
-        } else {
-            1
-        };
-        let y_sign = if y_diff != 0 {
-            y_diff / y_diff.abs()
-        } else {
-            1
-        };
+        let x_sign = x_diff.signum();
+        let y_sign = y_diff.signum();
 
         // If the X difference is 0, move only on the Y line
         if x_diff == 0 {
