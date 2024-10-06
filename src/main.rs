@@ -2,6 +2,7 @@ mod frame;
 mod offset;
 mod particle;
 mod simulation;
+mod test;
 
 use std::time::SystemTime;
 
