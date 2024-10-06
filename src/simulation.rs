@@ -220,13 +220,21 @@ impl Simulation {
                         did_move = true;
                         break;
                     }
+
+                    // Convert the max_offset to regular offset of magnitude 1 and check for Switch
+                    let new_offset = p_offset + max_offset.unit();
+                    if !self.is_within(&new_offset) {
+                        continue;
+                    }
+                    let new_index = self.offset_to_index(&new_offset);
                     // Try for SimMove::SWITCH
-                    // Safe to unwrap, we already checked that it is not noe
-                    if self.particles[new_index].unwrap().density < p.density {
-                        // Add the value to moves list
-                        moves_list.push_back((new_index, SimMove::Switch(i)));
-                        did_move = true;
-                        break;
+                    if let Some(other_p) = self.particles[new_index] {
+                        if other_p.density < p.density {
+                            // Add the value to moves list
+                            moves_list.push_back((new_index, SimMove::Switch(i)));
+                            did_move = true;
+                            break;
+                        }
                     }
                 }
 
@@ -266,11 +274,30 @@ impl Simulation {
                     self.particles[from] = None;
                 }
                 SimMove::Switch(with) => {
-                    // Create a copy of one of the particles
+                    // Create a copy of both particles and reset theit velocity
                     let particle_on_to = self.particles[*to];
-                    // Switch the particles on "to" and "with"
-                    self.particles[*to] = self.particles[with];
-                    self.particles[with] = particle_on_to;
+                    let particle_on_with = self.particles[with];
+
+                    match particle_on_to {
+                        Some(p) => {
+                            let mut p = p;
+                            p.reset_velocity();
+                            self.particles[with] = Some(p);
+                        }
+                        None => {
+                            self.particles[with] = None;
+                        }
+                    }
+                    match particle_on_with {
+                        Some(p) => {
+                            let mut p = p;
+                            p.reset_velocity();
+                            self.particles[*to] = Some(p);
+                        }
+                        None => {
+                            self.particles[*to] = None;
+                        }
+                    }
                 }
                 SimMove::Stop => {
                     let mut opt = self.particles[*to];

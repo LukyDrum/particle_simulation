@@ -48,6 +48,15 @@ impl Offset {
             .map(|s| Offset::new(self.x + s * x_sign, self.y + s * y_sign))
             .collect()
     }
+
+    // Get the the offset where both axis are scaled to magnitude of 1
+    pub fn unit(&self) -> Offset {
+        // Scaling to magnitude of 1 is the same as getting the sign
+        let x = self.x.signum();
+        let y = self.y.signum();
+
+        Offset::new(x, y)
+    }
 }
 
 impl ops::Add for Offset {
