@@ -1,6 +1,6 @@
 use std::ops;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Offset {
     pub x: i32,
     pub y: i32,
@@ -21,7 +21,7 @@ impl Offset {
         let x_diff = other.x - self.x;
         let y_diff = other.y - self.y;
 
-        if !(x_diff == y_diff || x_diff == 0 || y_diff == 0) {
+        if !(x_diff.abs() == y_diff.abs() || x_diff == 0 || y_diff == 0) {
             return vec![];
         }
 
