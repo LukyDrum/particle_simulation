@@ -267,7 +267,7 @@ impl Simulation {
                 // Move to spot and increase velocity, as if by gravity
                 SimMove::Move(from) => {
                     let mut particle = self.particles[from].unwrap(); // Safe to unwrap, we know the particle is the based on the move
-                    particle.increment_velocity();
+                    particle.increment_energy();
                     // Move the particle
                     self.particles[*to] = Some(particle);
                     // Free the old sport
@@ -281,7 +281,7 @@ impl Simulation {
                     match particle_on_to {
                         Some(p) => {
                             let mut p = p;
-                            p.reset_velocity();
+                            p.reset_energy();
                             self.particles[with] = Some(p);
                         }
                         None => {
@@ -291,7 +291,7 @@ impl Simulation {
                     match particle_on_with {
                         Some(p) => {
                             let mut p = p;
-                            p.reset_velocity();
+                            p.reset_energy();
                             self.particles[*to] = Some(p);
                         }
                         None => {
@@ -302,7 +302,7 @@ impl Simulation {
                 SimMove::Stop => {
                     let mut opt = self.particles[*to];
                     if let Some(p) = &mut opt {
-                        p.reset_velocity();
+                        p.reset_energy();
                     }
 
                     self.particles[*to] = opt;

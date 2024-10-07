@@ -3,8 +3,8 @@ use rand::{random, thread_rng, Rng};
 use crate::offset::Offset;
 
 const DENSITY_MAX: u8 = 255;
-const DEFAULT_VELOCITY: f32 = 1.0;
-const MAX_VELOCITY: f32 = 3.0;
+const DEFAULT_ENERGY: f32 = 1.0;
+const MAX_ENERGY: f32 = 5.0;
 const GRAVITY: f32 = 0.1;
 
 // Colors
@@ -33,7 +33,7 @@ impl Particle {
             color_function: |slf| slf.color,
             density: DENSITY_MAX,
             is_moveable: true,
-            velocity: DEFAULT_VELOCITY,
+            velocity: DEFAULT_ENERGY,
             primary_offset: Offset::new(0, 1),
             secondary_offsets: [Offset::new(-1, 1), Offset::new(1, 1)],
         }
@@ -54,7 +54,7 @@ impl Particle {
             color_function,
             density: 128,
             is_moveable: true,
-            velocity: DEFAULT_VELOCITY,
+            velocity: DEFAULT_ENERGY,
             primary_offset: Offset::new(0, 1),
             secondary_offsets: [Offset::new(-1, 0), Offset::new(1, 0)],
         }
@@ -66,7 +66,7 @@ impl Particle {
             color_function: |slf| slf.color,
             density: DENSITY_MAX,
             is_moveable: false,
-            velocity: DEFAULT_VELOCITY,
+            velocity: DEFAULT_ENERGY,
             primary_offset: Offset::zero(),
             secondary_offsets: [Offset::zero(), Offset::zero()],
         }
@@ -74,12 +74,12 @@ impl Particle {
 }
 
 impl Particle {
-    pub fn reset_velocity(&mut self) -> () {
-        self.velocity = DEFAULT_VELOCITY;
+    pub fn reset_energy(&mut self) -> () {
+        self.velocity = DEFAULT_ENERGY;
     }
 
-    pub fn increment_velocity(&mut self) -> () {
-        self.velocity = MAX_VELOCITY.min(self.velocity + GRAVITY);
+    pub fn increment_energy(&mut self) -> () {
+        self.velocity = MAX_ENERGY.min(self.velocity + GRAVITY);
     }
 
     pub fn get_max_offsets(&self) -> Vec<Offset> {
