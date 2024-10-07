@@ -49,13 +49,23 @@ impl Offset {
             .collect()
     }
 
-    // Get the the offset where both axis are scaled to magnitude of 1
+    /// Get the the offset where both axis are scaled to magnitude of 1
     pub fn unit(&self) -> Offset {
         // Scaling to magnitude of 1 is the same as getting the sign
         let x = self.x.signum();
         let y = self.y.signum();
 
         Offset::new(x, y)
+    }
+
+    /// True if the offset is aiming down in accordance with the global coordinate system.
+    pub fn is_down(&self) -> bool {
+        self.y > 0
+    }
+
+    /// True if the offset is aiming right in accordance with the global coordinate system.
+    pub fn is_right(&self) -> bool {
+        self.x > 0
     }
 }
 
@@ -66,6 +76,17 @@ impl ops::Add for Offset {
         Offset {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
+        }
+    }
+}
+
+impl ops::Sub for Offset {
+    type Output = Offset;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Offset {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
         }
     }
 }
