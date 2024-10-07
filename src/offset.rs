@@ -58,6 +58,11 @@ impl Offset {
         Offset::new(x, y)
     }
 
+    /// True if both coordinates are 0
+    pub fn is_zero(&self) -> bool {
+        self.x == 0 && self.y == 0
+    }
+
     /// True if the offset is aiming down in accordance with the global coordinate system.
     pub fn is_down(&self) -> bool {
         self.y > 0
