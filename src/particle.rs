@@ -1,3 +1,5 @@
+use std::collections::LinkedList;
+
 use rand::{random, thread_rng, Rng};
 
 use crate::offset::Offset;
@@ -22,7 +24,7 @@ pub struct Particle {
     /// Gasses are near to 0, Fluids around 128, Solid particles at 255.
     pub density: u8,
     pub velocity: f32,
-    /// This will be used if is non-zero, otherwise it will switch to primary and secondary offsets.
+    /// This will be used if it is non-zero, otherwise it will switch to primary and secondary offsets.
     pub movement: Offset,
     pub primary_offset: Offset,
     pub secondary_offsets: [Offset; 2],
@@ -88,7 +90,7 @@ impl Particle {
         self.velocity = MAX_VELOCITY.min(self.velocity + GRAVITY);
     }
 
-    pub fn get_max_offsets(&self) -> Vec<Offset> {
+    pub fn get_max_offsets(&self) -> LinkedList<Offset> {
         // Randomly choose the first of the secondary offsets
         let a: usize;
         let b: usize;
@@ -106,11 +108,21 @@ impl Particle {
 
         // Multiple the offsets by the velocity
         let v_int = self.velocity as i32;
-        vec![
-            self.primary_offset * v_int,
-            offset_a * v_int,
-            offset_b * v_int,
-        ]
+        let mut offset_list = LinkedList::new();
+        if !self.movement.is_zero() {
+            offset_list.push_back(self.movement * v_int);
+        }
+
+        offset_list.extend(
+            [
+                self.primary_offset * v_int,
+                offset_a * v_int,
+                offset_b * v_int,
+            ]
+            .iter(),
+        );
+
+        offset_list
     }
 
     /// Calls the color function of the particle, this lets particles change color based on it's parameters
