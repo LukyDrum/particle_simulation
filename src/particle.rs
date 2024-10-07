@@ -3,8 +3,8 @@ use rand::{random, thread_rng, Rng};
 use crate::offset::Offset;
 
 const DENSITY_MAX: u8 = 255;
-const DEFAULT_ENERGY: f32 = 1.0;
-const MAX_ENERGY: f32 = 5.0;
+const DEFAULT_VELOCITY: f32 = 1.0;
+const MAX_VELOCITY: f32 = 5.0;
 const GRAVITY: f32 = 0.1;
 
 // Colors
@@ -20,7 +20,7 @@ pub struct Particle {
     /// Gasses are near to 0, Fluids around 128, Solid particles at 255.
     pub density: u8,
     pub is_moveable: bool,
-    pub energy: f32,
+    pub velocity: f32,
     pub primary_offset: Offset,
     pub secondary_offsets: [Offset; 2],
 }
@@ -33,7 +33,7 @@ impl Particle {
             color_function: |slf| slf.color,
             density: DENSITY_MAX,
             is_moveable: true,
-            energy: DEFAULT_ENERGY,
+            velocity: DEFAULT_VELOCITY,
             primary_offset: Offset::new(0, 1),
             secondary_offsets: [Offset::new(-1, 1), Offset::new(1, 1)],
         }
@@ -42,7 +42,7 @@ impl Particle {
     pub fn water() -> Particle {
         // We want the water to be more white when moving fast.
         let color_function: fn(&Self) -> u32 = |slf| {
-            if slf.energy >= 2.0 {
+            if slf.velocity >= 2.0 {
                 return 0x00BAEEFF;
             }
 
@@ -54,7 +54,7 @@ impl Particle {
             color_function,
             density: 128,
             is_moveable: true,
-            energy: DEFAULT_ENERGY,
+            velocity: DEFAULT_VELOCITY,
             primary_offset: Offset::new(0, 1),
             secondary_offsets: [Offset::new(-1, 0), Offset::new(1, 0)],
         }
@@ -66,7 +66,7 @@ impl Particle {
             color_function: |slf| slf.color,
             density: DENSITY_MAX,
             is_moveable: false,
-            energy: DEFAULT_ENERGY,
+            velocity: DEFAULT_VELOCITY,
             primary_offset: Offset::zero(),
             secondary_offsets: [Offset::zero(), Offset::zero()],
         }
@@ -74,12 +74,12 @@ impl Particle {
 }
 
 impl Particle {
-    pub fn reset_energy(&mut self) -> () {
-        self.energy = DEFAULT_ENERGY;
+    pub fn reset_velocity(&mut self) -> () {
+        self.velocity = DEFAULT_VELOCITY;
     }
 
-    pub fn increment_energy(&mut self) -> () {
-        self.energy = MAX_ENERGY.min(self.energy + GRAVITY);
+    pub fn increment_velocity(&mut self) -> () {
+        self.velocity = MAX_VELOCITY.min(self.velocity + GRAVITY);
     }
 
     pub fn get_max_offsets(&self) -> Vec<Offset> {
@@ -99,7 +99,7 @@ impl Particle {
         let offset_b = self.secondary_offsets[b];
 
         // Multiple the offsets by the velocity
-        let v_int = self.energy as i32;
+        let v_int = self.velocity as i32;
         vec![
             self.primary_offset * v_int,
             offset_a * v_int,

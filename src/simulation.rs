@@ -238,7 +238,7 @@ impl Simulation {
                     }
                 }
 
-                if !did_move && p.energy > 1.0 {
+                if !did_move && p.velocity > 1.0 {
                     moves_list.push_back((i, SimMove::Stop));
                 }
             }
@@ -269,7 +269,7 @@ impl Simulation {
                     let mut particle = self.particles[from].unwrap(); // Safe to unwrap, we know the particle is the based on the move
                     let direction = self.index_to_offset(*to) - self.index_to_offset(from);
                     if direction.is_down() {
-                        particle.increment_energy();
+                        particle.increment_velocity();
                     }
 
                     // Move the particle
@@ -285,7 +285,7 @@ impl Simulation {
                     match particle_on_to {
                         Some(p) => {
                             let mut p = p;
-                            p.reset_energy();
+                            p.reset_velocity();
                             self.particles[with] = Some(p);
                         }
                         None => {
@@ -295,7 +295,7 @@ impl Simulation {
                     match particle_on_with {
                         Some(p) => {
                             let mut p = p;
-                            p.reset_energy();
+                            p.reset_velocity();
                             self.particles[*to] = Some(p);
                         }
                         None => {
@@ -306,7 +306,7 @@ impl Simulation {
                 SimMove::Stop => {
                     let mut opt = self.particles[*to];
                     if let Some(p) = &mut opt {
-                        p.reset_energy();
+                        p.reset_velocity();
                     }
 
                     self.particles[*to] = opt;
