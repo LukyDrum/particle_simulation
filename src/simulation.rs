@@ -162,7 +162,7 @@ impl Simulation {
             let start = i * chunk_size;
             // Define the end for each chunk
             let end = if i == thread_count - 1 {
-                self.width * self.height // ensure the last chunk goes to the end
+                self.width * self.height // Ensure the last chunk goes to the end
             } else {
                 (i + 1) * chunk_size
             };
@@ -192,6 +192,7 @@ impl Simulation {
 
         // Look at the given range
         for i in start..end {
+            // Get the possible particle
             let opt = &self.particles[i];
 
             if let Some(p) = opt {
@@ -260,56 +261,42 @@ impl Simulation {
     /// Apply the moves in moves map
     fn apply_moves(&mut self) -> () {
         for (to, move_vec) in self.moves.iter() {
+            let to = *to;
+
             let rand_index = rand::thread_rng().gen_range(0..move_vec.len());
             let chosen_move = move_vec[rand_index];
 
             match chosen_move {
                 // Move to spot and increase velocity, as if by gravity
                 SimMove::Move(from) => {
-                    let mut particle = self.particles[from].unwrap(); // Safe to unwrap, we know the particle is the based on the move
-                    let direction = self.index_to_offset(*to) - self.index_to_offset(from);
+                    let mut particle = self.particles[from].unwrap(); // Safe to unwrap, we know the particle is there based on the move
+
+                    // Check if the direction is aiming down
+                    let direction = self.index_to_offset(to) - self.index_to_offset(from);
                     if direction.is_down() {
                         particle.increment_velocity();
                     }
 
                     // Move the particle
-                    self.particles[*to] = Some(particle);
+                    self.particles[to] = Some(particle);
                     // Free the old sport
                     self.particles[from] = None;
                 }
+                // Switch particles on "to" and "with"
                 SimMove::Switch(with) => {
-                    // Create a copy of both particles and reset theit velocity
-                    let particle_on_to = self.particles[*to];
-                    let particle_on_with = self.particles[with];
+                    let opt_on_to = self.particles[to];
 
-                    match particle_on_to {
-                        Some(p) => {
-                            let mut p = p;
-                            p.reset_velocity();
-                            self.particles[with] = Some(p);
-                        }
-                        None => {
-                            self.particles[with] = None;
-                        }
-                    }
-                    match particle_on_with {
-                        Some(p) => {
-                            let mut p = p;
-                            p.reset_velocity();
-                            self.particles[*to] = Some(p);
-                        }
-                        None => {
-                            self.particles[*to] = None;
-                        }
-                    }
+                    self.particles[to] = self.particles[with];
+                    self.particles[with] = opt_on_to;
                 }
+                // Partcile does no move but still has velocity, then we should reset it's velocity
                 SimMove::Stop => {
-                    let mut opt = self.particles[*to];
+                    let mut opt = self.particles[to];
                     if let Some(p) = &mut opt {
                         p.reset_velocity();
                     }
 
-                    self.particles[*to] = opt;
+                    self.particles[to] = opt;
                 }
             }
 
