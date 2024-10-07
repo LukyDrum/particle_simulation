@@ -6,7 +6,11 @@ use rayon::{
 use rustc_hash::FxHashMap;
 use std::collections::LinkedList;
 
-use crate::{frame::Frame, offset::Offset, particle::Particle};
+use crate::{
+    frame::Frame,
+    offset::Offset,
+    particle::{Particle, DEFAULT_VELOCITY},
+};
 
 struct SimInfo {
     pub particle_count: u32,
@@ -204,15 +208,17 @@ impl Simulation {
                 // Particles current offset
                 let p_offset = self.index_to_offset(i);
                 let mut did_move = false;
+                // Check the maximum offsets the particle would like to move to
                 for max_offset in p.get_max_offsets() {
-                    // Find the maximum offset to which the particle can move based on its velocity
+                    // Find the maximum offset to which the particle CAN move
                     let new_offset = self.find_max_offset(p_offset, max_offset);
 
+                    // Check for out of bounds
                     if !self.is_within(&new_offset) {
                         continue;
                     }
 
-                    // Convert to index and try to move
+                    // Convert to index
                     let new_index = self.offset_to_index(&new_offset);
                     // Try for SimMove::MOVE
                     if self.particles[new_index].is_none() {
@@ -222,13 +228,15 @@ impl Simulation {
                         break;
                     }
 
+                    // Try for SimMove::SWITCH
                     // Convert the max_offset to regular offset of magnitude 1 and check for Switch
                     let new_offset = p_offset + max_offset.unit();
+                    // Check boundaries
                     if !self.is_within(&new_offset) {
                         continue;
                     }
+
                     let new_index = self.offset_to_index(&new_offset);
-                    // Try for SimMove::SWITCH
                     if let Some(other_p) = self.particles[new_index] {
                         if other_p.density < p.density {
                             // Add the value to moves list
@@ -239,7 +247,8 @@ impl Simulation {
                     }
                 }
 
-                if !did_move && p.velocity > 1.0 {
+                // If the particle did not move (that means there was no chance for it to move) we should stop it's velocity (if it is greater than default velocity)
+                if !did_move && p.velocity > DEFAULT_VELOCITY {
                     moves_list.push_back((i, SimMove::Stop));
                 }
             }

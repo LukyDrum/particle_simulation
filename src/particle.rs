@@ -2,11 +2,11 @@ use rand::{random, thread_rng, Rng};
 
 use crate::offset::Offset;
 
-const MAX_DENSITY: u8 = 255;
-const WATER_DENSITY: u8 = 128;
-const DEFAULT_VELOCITY: f32 = 1.0;
-const MAX_VELOCITY: f32 = 5.0;
-const GRAVITY: f32 = 0.1;
+pub const MAX_DENSITY: u8 = 255;
+pub const WATER_DENSITY: u8 = 128;
+pub const DEFAULT_VELOCITY: f32 = 1.0;
+pub const MAX_VELOCITY: f32 = 5.0;
+pub const GRAVITY: f32 = 0.1;
 
 // Colors
 const SAND_COLOR: u32 = 0x00E0E02D;
