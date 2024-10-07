@@ -304,7 +304,7 @@ impl Simulation {
                     if let Some(p) = &mut opt {
                         p.reset_velocity();
                     }
-                    // Move the particle
+
                     self.particles[*to] = opt;
                 }
             }
