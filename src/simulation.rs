@@ -238,7 +238,7 @@ impl Simulation {
                     }
                 }
 
-                if !did_move && p.velocity > 1.0 {
+                if !did_move && p.energy > 1.0 {
                     moves_list.push_back((i, SimMove::Stop));
                 }
             }
