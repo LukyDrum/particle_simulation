@@ -250,9 +250,8 @@ impl Simulation {
 
     /// Adds a move to the moves map
     fn add_move(&mut self, to: usize, sim_move: SimMove) -> () {
-        if self.moves.contains_key(&to) {
-            // Safe to unwrap as we checked for the key
-            self.moves.get_mut(&to).unwrap().push(sim_move);
+        if let Some(vec) = self.moves.get_mut(&to) {
+            vec.push(sim_move);
         } else {
             self.moves.insert(to, vec![sim_move]);
         }
