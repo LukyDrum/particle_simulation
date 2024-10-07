@@ -12,8 +12,8 @@ use offset::Offset;
 use particle::Particle;
 use simulation::Simulation;
 
-const WIDTH: usize = 100;
-const HEIGHT: usize = 100;
+const WIDTH: usize = 200;
+const HEIGHT: usize = 200;
 const LOGICAL_SCALE: usize = 3;
 const INDICATOR_SIZE: usize = 10;
 const BRUSH_SIZE: usize = 5;
