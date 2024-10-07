@@ -67,7 +67,7 @@ impl Simulation {
                     let particle_index = row * self.height + (col / logical_pixel_size);
                     let opt = &self.particles[particle_index];
                     let color = match opt {
-                        Some(p) => p.color,
+                        Some(p) => p.get_color(),
                         None => self.bg_color,
                     };
 

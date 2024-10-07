@@ -12,8 +12,8 @@ use offset::Offset;
 use particle::Particle;
 use simulation::Simulation;
 
-const WIDTH: usize = 200;
-const HEIGHT: usize = 200;
+const WIDTH: usize = 100;
+const HEIGHT: usize = 100;
 const LOGICAL_SCALE: usize = 3;
 const INDICATOR_SIZE: usize = 10;
 const BRUSH_SIZE: usize = 5;
@@ -108,7 +108,11 @@ fn main() {
 
 fn draw_ui_to_frame(frame: &mut Frame, current_particle: &Particle) {
     for offset in get_offsets_for_square(&Offset::new(5, 5), INDICATOR_SIZE) {
-        let _ = frame.draw_pixel(offset.x as usize, offset.y as usize, current_particle.color);
+        let _ = frame.draw_pixel(
+            offset.x as usize,
+            offset.y as usize,
+            current_particle.get_color(),
+        );
     }
 }
 

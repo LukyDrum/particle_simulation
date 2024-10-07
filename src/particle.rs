@@ -9,7 +9,8 @@ const GRAVITY: f32 = 0.1;
 
 #[derive(Clone, Copy)]
 pub struct Particle {
-    pub color: u32,
+    color: u32,
+    color_function: fn(&u32) -> u32,
     /// Higher density will fall through lower density. Set to 255 for absolutly solid particles.
     /// Gasses are near to 0, Fluids around 128, Solid particles at 255.
     pub density: u8,
@@ -22,8 +23,10 @@ pub struct Particle {
 // Implementations for creating different particle types
 impl Particle {
     pub fn sand() -> Particle {
+        let color = Self::get_near_color(0x00E0E02D);
         Particle {
-            color: Self::get_near_color(0x00E0E02D),
+            color,
+            color_function: |&c| c,
             density: DENSITY_MAX,
             is_moveable: true,
             velocity: DEFAULT_VELOCITY,
@@ -33,8 +36,10 @@ impl Particle {
     }
 
     pub fn water() -> Particle {
+        let color = Self::get_near_color(0x001BB2E0);
         Particle {
-            color: Self::get_near_color(0x001BB2E0),
+            color,
+            color_function: |&c| c,
             density: 128,
             is_moveable: true,
             velocity: DEFAULT_VELOCITY,
@@ -44,8 +49,10 @@ impl Particle {
     }
 
     pub fn rock() -> Particle {
+        let color = Self::get_near_color(0x00909090);
         Particle {
-            color: Self::get_near_color(0x00909090),
+            color,
+            color_function: |&c| c,
             density: DENSITY_MAX,
             is_moveable: false,
             velocity: DEFAULT_VELOCITY,
@@ -87,6 +94,11 @@ impl Particle {
             offset_a * v_int,
             offset_b * v_int,
         ]
+    }
+
+    /// Calls the color function of the particle, this lets particles change color based on it's parameters
+    pub fn get_color(&self) -> u32 {
+        (self.color_function)(&self.color)
     }
 }
 
