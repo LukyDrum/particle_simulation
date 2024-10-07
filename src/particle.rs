@@ -22,6 +22,8 @@ pub struct Particle {
     /// Gasses are near to 0, Fluids around 128, Solid particles at 255.
     pub density: u8,
     pub velocity: f32,
+    /// This will be used if is non-zero, otherwise it will switch to primary and secondary offsets.
+    pub movement: Offset,
     pub primary_offset: Offset,
     pub secondary_offsets: [Offset; 2],
 }
@@ -35,6 +37,7 @@ impl Particle {
             is_moveable: true,
             density: MAX_DENSITY,
             velocity: DEFAULT_VELOCITY,
+            movement: Offset::zero(),
             primary_offset: Offset::new(0, 1),
             secondary_offsets: [Offset::new(-1, 1), Offset::new(1, 1)],
         }
@@ -56,6 +59,7 @@ impl Particle {
             is_moveable: true,
             density: WATER_DENSITY,
             velocity: DEFAULT_VELOCITY,
+            movement: Offset::zero(),
             primary_offset: Offset::new(0, 1),
             secondary_offsets: [Offset::new(-1, 0), Offset::new(1, 0)],
         }
@@ -68,6 +72,7 @@ impl Particle {
             is_moveable: false,
             density: MAX_DENSITY,
             velocity: DEFAULT_VELOCITY,
+            movement: Offset::zero(),
             primary_offset: Offset::zero(),
             secondary_offsets: [Offset::zero(), Offset::zero()],
         }
