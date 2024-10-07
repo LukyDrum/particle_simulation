@@ -267,7 +267,11 @@ impl Simulation {
                 // Move to spot and increase velocity, as if by gravity
                 SimMove::Move(from) => {
                     let mut particle = self.particles[from].unwrap(); // Safe to unwrap, we know the particle is the based on the move
-                    particle.increment_energy();
+                    let direction = self.index_to_offset(*to) - self.index_to_offset(from);
+                    if direction.is_down() {
+                        particle.increment_energy();
+                    }
+
                     // Move the particle
                     self.particles[*to] = Some(particle);
                     // Free the old sport
