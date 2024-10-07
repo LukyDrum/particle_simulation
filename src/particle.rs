@@ -2,7 +2,8 @@ use rand::{random, thread_rng, Rng};
 
 use crate::offset::Offset;
 
-const DENSITY_MAX: u8 = 255;
+const MAX_DENSITY: u8 = 255;
+const WATER_DENSITY: u8 = 128;
 const DEFAULT_VELOCITY: f32 = 1.0;
 const MAX_VELOCITY: f32 = 5.0;
 const GRAVITY: f32 = 0.1;
@@ -16,10 +17,10 @@ const ROCK_COLOR: u32 = 0x00909090;
 pub struct Particle {
     color: u32,
     color_function: fn(&Self) -> u32,
+    pub is_moveable: bool,
     /// Higher density will fall through lower density. Set to 255 for absolutly solid particles.
     /// Gasses are near to 0, Fluids around 128, Solid particles at 255.
     pub density: u8,
-    pub is_moveable: bool,
     pub velocity: f32,
     pub primary_offset: Offset,
     pub secondary_offsets: [Offset; 2],
@@ -31,8 +32,8 @@ impl Particle {
         Particle {
             color: Self::get_near_color(SAND_COLOR),
             color_function: |slf| slf.color,
-            density: DENSITY_MAX,
             is_moveable: true,
+            density: MAX_DENSITY,
             velocity: DEFAULT_VELOCITY,
             primary_offset: Offset::new(0, 1),
             secondary_offsets: [Offset::new(-1, 1), Offset::new(1, 1)],
@@ -52,8 +53,8 @@ impl Particle {
         Particle {
             color: Self::get_near_color(WATER_COLOR),
             color_function,
-            density: 128,
             is_moveable: true,
+            density: WATER_DENSITY,
             velocity: DEFAULT_VELOCITY,
             primary_offset: Offset::new(0, 1),
             secondary_offsets: [Offset::new(-1, 0), Offset::new(1, 0)],
@@ -64,8 +65,8 @@ impl Particle {
         Particle {
             color: Self::get_near_color(ROCK_COLOR),
             color_function: |slf| slf.color,
-            density: DENSITY_MAX,
             is_moveable: false,
+            density: MAX_DENSITY,
             velocity: DEFAULT_VELOCITY,
             primary_offset: Offset::zero(),
             secondary_offsets: [Offset::zero(), Offset::zero()],
