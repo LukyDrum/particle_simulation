@@ -7,10 +7,15 @@ const DEFAULT_VELOCITY: f32 = 1.0;
 const MAX_VELOCITY: f32 = 3.0;
 const GRAVITY: f32 = 0.1;
 
+// Colors
+const SAND_COLOR: u32 = 0x00E0E02D;
+const WATER_COLOR: u32 = 0x001BB2E0;
+const ROCK_COLOR: u32 = 0x00909090;
+
 #[derive(Clone, Copy)]
 pub struct Particle {
     color: u32,
-    color_function: fn(&u32) -> u32,
+    color_function: fn(&Self) -> u32,
     /// Higher density will fall through lower density. Set to 255 for absolutly solid particles.
     /// Gasses are near to 0, Fluids around 128, Solid particles at 255.
     pub density: u8,
@@ -23,10 +28,9 @@ pub struct Particle {
 // Implementations for creating different particle types
 impl Particle {
     pub fn sand() -> Particle {
-        let color = Self::get_near_color(0x00E0E02D);
         Particle {
-            color,
-            color_function: |&c| c,
+            color: Self::get_near_color(SAND_COLOR),
+            color_function: |slf| slf.color,
             density: DENSITY_MAX,
             is_moveable: true,
             velocity: DEFAULT_VELOCITY,
@@ -36,10 +40,18 @@ impl Particle {
     }
 
     pub fn water() -> Particle {
-        let color = Self::get_near_color(0x001BB2E0);
+        // We want the water to be more white when moving fast.
+        let color_function: fn(&Self) -> u32 = |slf| {
+            if slf.velocity >= 2.0 {
+                return 0x00BAEEFF;
+            }
+
+            slf.color
+        };
+
         Particle {
-            color,
-            color_function: |&c| c,
+            color: Self::get_near_color(WATER_COLOR),
+            color_function,
             density: 128,
             is_moveable: true,
             velocity: DEFAULT_VELOCITY,
@@ -49,10 +61,9 @@ impl Particle {
     }
 
     pub fn rock() -> Particle {
-        let color = Self::get_near_color(0x00909090);
         Particle {
-            color,
-            color_function: |&c| c,
+            color: Self::get_near_color(ROCK_COLOR),
+            color_function: |slf| slf.color,
             density: DENSITY_MAX,
             is_moveable: false,
             velocity: DEFAULT_VELOCITY,
@@ -98,7 +109,7 @@ impl Particle {
 
     /// Calls the color function of the particle, this lets particles change color based on it's parameters
     pub fn get_color(&self) -> u32 {
-        (self.color_function)(&self.color)
+        (self.color_function)(self)
     }
 }
 
