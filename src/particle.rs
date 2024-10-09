@@ -4,6 +4,13 @@ use rand::{random, thread_rng, Rng};
 
 use crate::offset::Offset;
 
+#[derive(Clone, Copy)]
+pub enum MatterType {
+    Solid,
+    Liquid { pressure: f32 },
+    Gas,
+}
+
 pub const MAX_DENSITY: u8 = 255;
 pub const WATER_DENSITY: u8 = 128;
 pub const DEFAULT_VELOCITY: f32 = 1.0;
