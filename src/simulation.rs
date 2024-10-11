@@ -9,7 +9,7 @@ use std::collections::LinkedList;
 use crate::{
     frame::Frame,
     offset::Offset,
-    particle::{Particle, DEFAULT_VELOCITY},
+    particle::{Particle, DEFAULT_VELOCITY, MAX_DENSITY},
 };
 
 struct SimInfo {
@@ -68,7 +68,7 @@ impl Simulation {
             .for_each(|(row, chunk)| {
                 // Draw logical pixels
                 for col in (0..real_row_width).step_by(logical_pixel_size) {
-                    let particle_index = row * self.height + (col / logical_pixel_size);
+                    let particle_index = row * self.width + (col / logical_pixel_size);
                     let opt = &self.particles[particle_index];
                     let color = match opt {
                         Some(p) => p.get_color(),
@@ -286,9 +286,26 @@ impl Simulation {
                 // Switch particles on "to" and "with"
                 SimMove::Switch(with) => {
                     let opt_on_to = self.particles[to];
+                    let opt_on_with = self.particles[with];
 
-                    self.particles[to] = self.particles[with];
-                    self.particles[with] = opt_on_to;
+                    // TODO: Maybe calculate this value based on density?
+                    let slow_down = 0.2;
+
+                    if let Some(p) = opt_on_to {
+                        let mut p = p;
+                        p.velocity = DEFAULT_VELOCITY.max(p.velocity - slow_down);
+                        self.particles[with] = Some(p);
+                    } else {
+                        self.particles[with] = None;
+                    }
+
+                    if let Some(p) = opt_on_with {
+                        let mut p = p;
+                        p.velocity = DEFAULT_VELOCITY.max(p.velocity - slow_down);
+                        self.particles[to] = Some(p);
+                    } else {
+                        self.particles[to] = None;
+                    }
                 }
                 // Partcile does no move but still has velocity, then we should reset it's velocity
                 SimMove::Stop => {
