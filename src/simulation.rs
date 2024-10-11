@@ -211,7 +211,7 @@ impl Simulation {
                 // Check the maximum offsets the particle would like to move to
                 for max_offset in p.get_max_offsets() {
                     // Find the maximum offset to which the particle CAN move
-                    let new_offset = self.find_max_offset(p_offset, max_offset);
+                    let new_offset = self.find_max_offset(p_offset, max_offset, p);
 
                     // Check for out of bounds
                     if !self.is_within(&new_offset) {
@@ -220,6 +220,7 @@ impl Simulation {
 
                     // Convert to index
                     let new_index = self.offset_to_index(&new_offset);
+
                     // Try for SimMove::MOVE
                     if self.particles[new_index].is_none() {
                         // Add the value to moves list
@@ -229,14 +230,6 @@ impl Simulation {
                     }
 
                     // Try for SimMove::SWITCH
-                    // Convert the max_offset to regular offset of magnitude 1 and check for Switch
-                    let new_offset = p_offset + max_offset.unit();
-                    // Check boundaries
-                    if !self.is_within(&new_offset) {
-                        continue;
-                    }
-
-                    let new_index = self.offset_to_index(&new_offset);
                     if let Some(other_p) = self.particles[new_index] {
                         if other_p.density < p.density {
                             // Add the value to moves list
@@ -321,7 +314,8 @@ impl Simulation {
         self.sim_info.moves_made_last_frame = 0;
     }
 
-    fn find_max_offset(&self, p_offset: Offset, max_offset: Offset) -> Offset {
+    // Find the maximum offset to which a particle can either move to or switch to
+    fn find_max_offset(&self, p_offset: Offset, max_offset: Offset, particle: &Particle) -> Offset {
         // Get all the offsets between
         let max_pos = p_offset + max_offset;
         let offsets_between = p_offset.between(&max_pos);
@@ -337,8 +331,11 @@ impl Simulation {
             let index = self.offset_to_index(&offset);
             let opt = &self.particles[index];
 
-            if opt.is_some() {
-                return offsets_between[i - 1];
+            if let Some(other_p) = opt {
+                // If other_p does not have lower density, then we won't be able to switch
+                if !(other_p.density < particle.density) {
+                    return offsets_between[i - 1];
+                }
             }
         }
 
