@@ -4,6 +4,8 @@ use crate::offset::Offset;
 
 pub const MAX_DENSITY: u8 = 255;
 pub const WATER_DENSITY: u8 = 128;
+pub const OIL_DENSITY: u8 = 120;
+
 pub const DEFAULT_VELOCITY: f32 = 1.0;
 pub const MAX_VELOCITY: f32 = 5.0;
 pub const GRAVITY: f32 = 0.1;
@@ -12,6 +14,7 @@ pub const GRAVITY: f32 = 0.1;
 const SAND_COLOR: u32 = 0x00E0E02D;
 const WATER_COLOR: u32 = 0x001BB2E0;
 const ROCK_COLOR: u32 = 0x00909090;
+const OIL_COLOR: u32 = 0x0087784A;
 
 #[derive(Clone, Copy)]
 pub struct Particle {
@@ -70,6 +73,27 @@ impl Particle {
             velocity: DEFAULT_VELOCITY,
             primary_offset: Offset::zero(),
             secondary_offsets: [Offset::zero(), Offset::zero()],
+        }
+    }
+
+    pub fn oil() -> Particle {
+        // We want the oil to be more white when moving fast.
+        let color_function: fn(&Self) -> u32 = |slf| {
+            if slf.velocity >= 2.0 {
+                return 0x00D9CCA7;
+            }
+
+            slf.color
+        };
+
+        Particle {
+            color: Self::get_near_color(OIL_COLOR),
+            color_function,
+            is_moveable: true,
+            density: OIL_DENSITY,
+            velocity: DEFAULT_VELOCITY,
+            primary_offset: Offset::new(0, 1),
+            secondary_offsets: [Offset::new(-1, 0), Offset::new(1, 0)],
         }
     }
 }

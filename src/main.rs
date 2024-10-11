@@ -12,9 +12,9 @@ use offset::Offset;
 use particle::Particle;
 use simulation::Simulation;
 
-const WIDTH: usize = 120;
+const WIDTH: usize = 30;
 const HEIGHT: usize = 120;
-const LOGICAL_SCALE: usize = 5;
+const LOGICAL_SCALE: usize = 6;
 const INDICATOR_SIZE: usize = 10;
 const BRUSH_SIZE: usize = 5;
 
@@ -36,7 +36,12 @@ fn main() {
     let mut simulation = Simulation::new(WIDTH, HEIGHT);
     simulation.print_debug = true;
 
-    let unique_particles = vec![Particle::sand, Particle::water, Particle::rock];
+    let unique_particles = vec![
+        Particle::sand,
+        Particle::water,
+        Particle::rock,
+        Particle::oil,
+    ];
     let indicator_particles: Vec<Particle> = unique_particles.iter().map(|p| p()).collect();
     let mut index = 0;
 
