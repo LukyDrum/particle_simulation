@@ -289,7 +289,7 @@ impl Simulation {
                     let opt_on_with = self.particles[with];
 
                     // TODO: Maybe calculate this value based on density?
-                    let slow_down = 0.2;
+                    let slow_down = 0.1;
 
                     if let Some(p) = opt_on_to {
                         let mut p = p;
