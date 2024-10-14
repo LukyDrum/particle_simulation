@@ -16,6 +16,17 @@ const WATER_COLOR: u32 = 0x001BB2E0;
 const ROCK_COLOR: u32 = 0x00909090;
 const OIL_COLOR: u32 = 0x0087784A;
 
+/// Determines how does the particle burn
+#[derive(Clone, Copy)]
+pub enum Burnability {
+    /// Particle can be set on fire
+    CanBurn,
+    /// Particle is currently burning
+    IsBurning,
+    /// Particle is not burning neither can burn
+    None,
+}
+
 #[derive(Clone, Copy)]
 pub struct Particle {
     color: u32,
@@ -27,6 +38,7 @@ pub struct Particle {
     pub velocity: f32,
     pub primary_offset: Offset,
     pub secondary_offsets: [Offset; 2],
+    pub burnability: Burnability,
 }
 
 // Implementations for creating different particle types
@@ -40,6 +52,7 @@ impl Particle {
             velocity: DEFAULT_VELOCITY,
             primary_offset: Offset::new(0, 1),
             secondary_offsets: [Offset::new(-1, 1), Offset::new(1, 1)],
+            burnability: Burnability::None,
         }
     }
 
@@ -61,6 +74,7 @@ impl Particle {
             velocity: DEFAULT_VELOCITY,
             primary_offset: Offset::new(0, 1),
             secondary_offsets: [Offset::new(-1, 0), Offset::new(1, 0)],
+            burnability: Burnability::None,
         }
     }
 
@@ -73,6 +87,7 @@ impl Particle {
             velocity: DEFAULT_VELOCITY,
             primary_offset: Offset::zero(),
             secondary_offsets: [Offset::zero(), Offset::zero()],
+            burnability: Burnability::None,
         }
     }
 
@@ -94,6 +109,7 @@ impl Particle {
             velocity: DEFAULT_VELOCITY,
             primary_offset: Offset::new(0, 1),
             secondary_offsets: [Offset::new(-1, 0), Offset::new(1, 0)],
+            burnability: Burnability::CanBurn,
         }
     }
 }
