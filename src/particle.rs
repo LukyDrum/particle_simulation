@@ -136,6 +136,11 @@ impl Particle {
     pub fn get_color(&self) -> u32 {
         (self.color_function)(self)
     }
+
+    /// Returns true if the particles density is the MAX_DENSITY
+    pub fn is_solid(&self) -> bool {
+        self.density == MAX_DENSITY
+    }
 }
 
 impl Particle {

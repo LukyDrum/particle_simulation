@@ -9,7 +9,7 @@ use std::collections::LinkedList;
 use crate::{
     frame::Frame,
     offset::Offset,
-    particle::{Particle, DEFAULT_VELOCITY, MAX_DENSITY},
+    particle::{Particle, DEFAULT_VELOCITY},
 };
 
 struct SimInfo {
@@ -388,7 +388,6 @@ impl Simulation {
     /// Particles can switch if other particle has lower density
     /// OR the particle has high enough speed and the other particle is not completely solid.
     fn can_switch(p: &Particle, other_p: &Particle) -> bool {
-        other_p.density < p.density
-            || (p.velocity > DEFAULT_VELOCITY && other_p.density < MAX_DENSITY)
+        other_p.density < p.density || (p.velocity > DEFAULT_VELOCITY && !other_p.is_solid())
     }
 }
