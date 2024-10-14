@@ -34,9 +34,7 @@ enum SimMove {
 }
 
 #[derive(Clone, Copy)]
-enum SimUpdate {
-    VelocityStop(usize), // Reset velocity for particle at index
-}
+enum SimUpdate {}
 
 pub struct Simulation {
     width: usize,
