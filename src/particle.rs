@@ -157,6 +157,15 @@ impl Particle {
     pub fn is_solid(&self) -> bool {
         self.density == MAX_DENSITY
     }
+
+    /// Copy the important move related parameters to particle p.
+    pub fn copy_parameters_to_particle(&self, p: &mut Particle) -> () {
+        p.is_moveable = self.is_moveable;
+        p.density = self.density;
+        p.velocity = self.velocity;
+        p.primary_offset = self.primary_offset;
+        p.secondary_offsets = self.secondary_offsets;
+    }
 }
 
 impl Particle {

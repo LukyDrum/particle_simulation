@@ -34,7 +34,9 @@ enum SimMove {
 }
 
 #[derive(Clone, Copy)]
-enum SimUpdate {}
+enum SimUpdate {
+    SetOnFire(usize), // Sets the particle at index on fire
+}
 
 pub struct Simulation {
     width: usize,
