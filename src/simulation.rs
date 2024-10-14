@@ -28,9 +28,14 @@ impl SimInfo {
 
 #[derive(Clone, Copy)]
 enum SimMove {
-    Move(usize),   // FROM where
+    Move(usize),   // FROM
     Switch(usize), // FROM
     Stop,          // Happens when particle with velocity stops in place
+}
+
+#[derive(Clone, Copy)]
+enum SimUpdate {
+    VelocityStop(usize), // Reset velocity for particle at index
 }
 
 pub struct Simulation {
@@ -39,6 +44,7 @@ pub struct Simulation {
     bg_color: u32,
     particles: Vec<Option<Particle>>,
     moves: FxHashMap<usize, Vec<SimMove>>, // Destination index, Moves to be done ending at that index
+    updates: LinkedList<SimUpdate>,
     sim_info: SimInfo,
     pub print_debug: bool,
 }
@@ -51,6 +57,7 @@ impl Simulation {
             bg_color: 0x00000000,
             particles: vec![None; width * height],
             moves: FxHashMap::default(),
+            updates: LinkedList::new(),
             sim_info: SimInfo::new(),
             print_debug: false,
         }
