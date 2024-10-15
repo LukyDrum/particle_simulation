@@ -297,6 +297,7 @@ impl Simulation {
                 // Switch particles on "to" and "with"
                 SimMove::Switch(with) => {
                     let opt_on_to = &self.particles[to];
+                    let opt_on_with = self.particles[with].clone();
 
                     // TODO: Maybe calculate this value based on density?
                     let slow_down = 0.1;
@@ -309,10 +310,8 @@ impl Simulation {
                         self.particles[with] = None;
                     }
 
-                    let opt_on_with = &self.particles[with];
-
                     if let Some(p) = opt_on_with {
-                        let mut p = *clone_box(&*p);
+                        let mut p = clone_box(&*p);
                         p.apply_acceleration(-slow_down);
                         self.particles[to] = Some(p);
                     } else {
