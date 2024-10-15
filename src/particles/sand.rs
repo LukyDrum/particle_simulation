@@ -1,26 +1,31 @@
 use std::collections::LinkedList;
 
-use crate::particles::particle::{DEFAULT_VELOCITY, GRAVITY, MAX_DENSITY, MAX_VELOCITY};
-use crate::particles::Particle;
+use rand::random;
+
+use crate::particles::constants::*;
+use crate::particles::{get_near_color, Particle};
 use crate::Offset;
 
 const SAND_COLOR: u32 = 0x00E0E02D;
 
+#[derive(Clone)]
 pub struct Sand {
     velocity: f32,
+    color: u32,
 }
 
 impl Sand {
-    pub fn new() -> Sand {
-        Sand {
+    pub fn new() -> Box<dyn Particle> {
+        Box::new(Sand {
             velocity: DEFAULT_VELOCITY,
-        }
+            color: get_near_color(SAND_COLOR),
+        })
     }
 }
 
 impl Particle for Sand {
     fn get_color(&self) -> u32 {
-        SAND_COLOR
+        self.color
     }
 
     fn get_density(&self) -> u8 {
@@ -33,10 +38,16 @@ impl Particle for Sand {
 
     fn get_max_offsets(&self) -> LinkedList<Offset> {
         let mut lst = LinkedList::new();
+        let vel = self.velocity as i32;
 
-        lst.push_back(Offset::new(0, 1));
-        lst.push_back(Offset::new(1, 0));
-        lst.push_back(Offset::new(-1, 0));
+        lst.push_back(Offset::new(0, 1) * vel);
+        if random() {
+            lst.push_back(Offset::new(1, 1) * vel);
+            lst.push_back(Offset::new(-1, 1) * vel);
+        } else {
+            lst.push_back(Offset::new(-1, 1) * vel);
+            lst.push_back(Offset::new(1, 1) * vel);
+        }
 
         lst
     }
@@ -53,7 +64,7 @@ impl Particle for Sand {
         self.velocity = DEFAULT_VELOCITY;
     }
 
-    fn apply_gravity(&mut self) -> () {
-        self.velocity = (self.velocity + GRAVITY).min(MAX_VELOCITY);
+    fn apply_acceleration(&mut self, acc: f32) -> () {
+        self.velocity = (self.velocity + acc).clamp(DEFAULT_VELOCITY, MAX_VELOCITY);
     }
 }

@@ -1,6 +1,6 @@
 mod frame;
 mod offset;
-mod particle;
+mod particles;
 mod simulation;
 mod test;
 
@@ -9,7 +9,7 @@ use std::time::SystemTime;
 use crate::frame::Frame;
 use minifb::{Key, MouseButton, Window, WindowOptions};
 use offset::Offset;
-use particle::Particle;
+use particles::{Particle, Sand};
 use simulation::Simulation;
 
 const WIDTH: usize = 30;
@@ -36,13 +36,9 @@ fn main() {
     let mut simulation = Simulation::new(WIDTH, HEIGHT);
     simulation.print_debug = true;
 
-    let unique_particles = vec![
-        Particle::sand,
-        Particle::water,
-        Particle::rock,
-        Particle::oil,
-    ];
-    let indicator_particles: Vec<Particle> = unique_particles.iter().map(|p| p()).collect();
+    let unique_particles = vec![|| Sand::new()];
+    let indicator_particles: Vec<Box<dyn Particle>> =
+        unique_particles.iter().map(|p| p()).collect();
     let mut index = 0;
 
     let mut cur_time = SystemTime::now();
@@ -111,7 +107,7 @@ fn main() {
     }
 }
 
-fn draw_ui_to_frame(frame: &mut Frame, current_particle: &Particle) {
+fn draw_ui_to_frame(frame: &mut Frame, current_particle: &Box<dyn Particle>) {
     for offset in get_offsets_for_square(&Offset::new(5, 5), INDICATOR_SIZE) {
         let _ = frame.draw_pixel(
             offset.x as usize,

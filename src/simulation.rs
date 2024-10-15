@@ -1,3 +1,4 @@
+use dyn_clone::clone_box;
 use rand::Rng;
 use rayon::{
     iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator},
@@ -9,7 +10,7 @@ use std::collections::LinkedList;
 use crate::{
     frame::Frame,
     offset::Offset,
-    particle::{Particle, DEFAULT_VELOCITY},
+    particles::{constants::*, Particle},
 };
 
 struct SimInfo {
@@ -42,7 +43,7 @@ pub struct Simulation {
     width: usize,
     height: usize,
     bg_color: u32,
-    particles: Vec<Option<Particle>>,
+    particles: Vec<Option<Box<dyn Particle>>>,
     moves: FxHashMap<usize, Vec<SimMove>>, // Destination index, Moves to be done ending at that index
     updates: LinkedList<SimUpdate>,
     sim_info: SimInfo,
@@ -92,7 +93,7 @@ impl Simulation {
             });
     }
 
-    pub fn add_particle(&mut self, offset: &Offset, particle: Particle) -> bool {
+    pub fn add_particle(&mut self, offset: &Offset, particle: Box<dyn Particle>) -> bool {
         if !self.is_within(&offset) {
             return false;
         }
@@ -116,7 +117,7 @@ impl Simulation {
         }
 
         let index = self.offset_to_index(offset);
-        let opt = self.particles[index];
+        let opt = &self.particles[index];
 
         match opt {
             None => return false,
@@ -131,7 +132,7 @@ impl Simulation {
         }
     }
 
-    pub fn get_particle(&self, offset: &Offset) -> &Option<Particle> {
+    pub fn get_particle(&self, offset: &Offset) -> &Option<Box<dyn Particle>> {
         if !self.is_within(&offset) {
             return &None;
         }
@@ -139,13 +140,13 @@ impl Simulation {
         &self.particles[self.offset_to_index(offset)]
     }
 
-    pub fn change_particle(&mut self, offset: &Offset, new_particle: &Particle) -> () {
+    pub fn change_particle(&mut self, offset: &Offset, new_particle: Box<dyn Particle>) -> () {
         if !self.is_within(&offset) {
             return;
         }
 
         let index = self.offset_to_index(offset);
-        self.particles[index] = Some(*new_particle);
+        self.particles[index] = Some(new_particle);
     }
 
     pub fn simulate_step(&mut self) -> () {
@@ -208,7 +209,7 @@ impl Simulation {
 
             if let Some(p) = opt {
                 // If the particle is not moveable, we can just skip it
-                if !p.is_moveable {
+                if !p.is_moveable() {
                     continue;
                 }
 
@@ -237,8 +238,8 @@ impl Simulation {
                     }
 
                     // Try for SimMove::SWITCH
-                    if let Some(other_p) = self.particles[new_index] {
-                        if Self::can_switch(p, &other_p) {
+                    if let Some(other_p) = &self.particles[new_index] {
+                        if Self::can_switch(p, other_p) {
                             // Add the value to moves list
                             moves_list.push_back((new_index, SimMove::Switch(i)));
                             did_move = true;
@@ -248,7 +249,7 @@ impl Simulation {
                 }
 
                 // If the particle did not move (that means there was no chance for it to move) we should stop it's velocity (if it is greater than default velocity)
-                if !did_move && p.velocity > DEFAULT_VELOCITY {
+                if !did_move && p.get_velocity() > DEFAULT_VELOCITY {
                     moves_list.push_back((i, SimMove::Stop));
                 }
             }
@@ -277,38 +278,42 @@ impl Simulation {
             match chosen_move {
                 // Move to spot and increase velocity, as if by gravity
                 SimMove::Move(from) => {
-                    let mut particle = self.particles[from].unwrap(); // Safe to unwrap, we know the particle is there based on the move
+                    let opt = &self.particles[from];
 
-                    // Check if the direction is aiming down
-                    let direction = self.index_to_offset(to) - self.index_to_offset(from);
-                    if direction.is_down() {
-                        particle.increment_velocity();
+                    if let Some(p) = opt {
+                        let mut p = *clone_box(&*p);
+                        // Check if the direction is aiming down
+                        let direction = self.index_to_offset(to) - self.index_to_offset(from);
+                        if direction.is_down() {
+                            p.apply_acceleration(GRAVITY);
+                        }
+
+                        // Move the particle
+                        self.particles[to] = Some(p);
+                        // Free the old sport
+                        self.particles[from] = None;
                     }
-
-                    // Move the particle
-                    self.particles[to] = Some(particle);
-                    // Free the old sport
-                    self.particles[from] = None;
                 }
                 // Switch particles on "to" and "with"
                 SimMove::Switch(with) => {
-                    let opt_on_to = self.particles[to];
-                    let opt_on_with = self.particles[with];
+                    let opt_on_to = &self.particles[to];
 
                     // TODO: Maybe calculate this value based on density?
                     let slow_down = 0.1;
 
                     if let Some(p) = opt_on_to {
-                        let mut p = p;
-                        p.velocity = DEFAULT_VELOCITY.max(p.velocity - slow_down);
+                        let mut p = *clone_box(&*p);
+                        p.apply_acceleration(-slow_down);
                         self.particles[with] = Some(p);
                     } else {
                         self.particles[with] = None;
                     }
 
+                    let opt_on_with = &self.particles[with];
+
                     if let Some(p) = opt_on_with {
-                        let mut p = p;
-                        p.velocity = DEFAULT_VELOCITY.max(p.velocity - slow_down);
+                        let mut p = *clone_box(&*p);
+                        p.apply_acceleration(-slow_down);
                         self.particles[to] = Some(p);
                     } else {
                         self.particles[to] = None;
@@ -316,12 +321,10 @@ impl Simulation {
                 }
                 // Partcile does no move but still has velocity, then we should reset it's velocity
                 SimMove::Stop => {
-                    let mut opt = self.particles[to];
+                    let mut opt = &mut self.particles[to];
                     if let Some(p) = &mut opt {
                         p.reset_velocity();
                     }
-
-                    self.particles[to] = opt;
                 }
             }
 
@@ -339,7 +342,12 @@ impl Simulation {
     }
 
     // Find the maximum offset to which a particle can either move to or switch to
-    fn find_max_offset(&self, p_offset: Offset, max_offset: Offset, particle: &Particle) -> Offset {
+    fn find_max_offset(
+        &self,
+        p_offset: Offset,
+        max_offset: Offset,
+        particle: &Box<dyn Particle>,
+    ) -> Offset {
         // Get all the offsets between
         let max_pos = p_offset + max_offset;
         let offsets_between = p_offset.between(&max_pos);
@@ -394,7 +402,8 @@ impl Simulation {
 
     /// Particles can switch if other particle has lower density
     /// OR the particle has high enough speed and the other particle is not completely solid.
-    fn can_switch(p: &Particle, other_p: &Particle) -> bool {
-        other_p.density < p.density || (p.velocity > DEFAULT_VELOCITY && !other_p.is_solid())
+    fn can_switch(p: &Box<dyn Particle>, other_p: &Box<dyn Particle>) -> bool {
+        other_p.get_density() < p.get_density()
+            || (p.get_velocity() > DEFAULT_VELOCITY && !other_p.is_solid())
     }
 }

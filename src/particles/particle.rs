@@ -1,13 +1,9 @@
 use std::collections::LinkedList;
 
+use dyn_clone::DynClone;
 use rand::{thread_rng, Rng};
 
 use crate::offset::Offset;
-
-pub const DEFAULT_VELOCITY: f32 = 1.0;
-pub const MAX_VELOCITY: f32 = 5.0;
-pub const GRAVITY: f32 = 0.1;
-pub const MAX_DENSITY: u8 = 255;
 
 /// Returns a color similiar to the color provided
 pub fn get_near_color(color: u32) -> u32 {
@@ -20,9 +16,12 @@ pub fn get_near_color(color: u32) -> u32 {
     fin_color
 }
 
+// Needed for DynClone
+dyn_clone::clone_trait_object!(Particle);
+
 /// A trait that all particle types implement.
 /// To create your own particle types implement this trait.
-pub trait Particle {
+pub trait Particle: Send + Sync + DynClone {
     /// Creates a new instance of this particle.
     // fn new() -> Self;
 
@@ -53,6 +52,6 @@ pub trait Particle {
     /// Resets the particle velocity to the DEFAULT_VELOCITY.
     fn reset_velocity(&mut self) -> ();
 
-    /// Applies gravity to the velocity of this particle.
-    fn apply_gravity(&mut self) -> ();
+    /// Applies the provided acceleration to the velocity of this particle.
+    fn apply_acceleration(&mut self, acc: f32) -> ();
 }
