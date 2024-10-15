@@ -9,7 +9,7 @@ use std::time::SystemTime;
 use crate::frame::Frame;
 use minifb::{Key, MouseButton, Window, WindowOptions};
 use offset::Offset;
-use particles::{Particle, Sand};
+use particles::{Particle, Sand, Water};
 use simulation::Simulation;
 
 const WIDTH: usize = 30;
@@ -36,7 +36,7 @@ fn main() {
     let mut simulation = Simulation::new(WIDTH, HEIGHT);
     simulation.print_debug = true;
 
-    let unique_particles = vec![|| Sand::new()];
+    let unique_particles = vec![Sand::new, Water::new];
     let indicator_particles: Vec<Box<dyn Particle>> =
         unique_particles.iter().map(|p| p()).collect();
     let mut index = 0;
