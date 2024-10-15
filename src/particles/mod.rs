@@ -1,8 +1,10 @@
 pub mod constants;
+mod p_rock;
+mod p_sand;
+mod p_water;
 mod particle;
-mod sand;
-mod water;
 
+pub use p_rock::Rock;
+pub use p_sand::Sand;
+pub use p_water::Water;
 pub use particle::{get_near_color, Particle};
-pub use sand::Sand;
-pub use water::Water;
