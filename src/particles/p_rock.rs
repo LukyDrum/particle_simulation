@@ -9,14 +9,12 @@ const DENSITY: u8 = MAX_DENSITY;
 
 #[derive(Clone)]
 pub struct Rock {
-    velocity: f32,
     color: u32,
 }
 
 impl Rock {
     pub fn new() -> Box<dyn Particle> {
         Box::new(Rock {
-            velocity: DEFAULT_VELOCITY,
             color: get_near_color(COLOR),
         })
     }
@@ -32,7 +30,7 @@ impl Particle for Rock {
     }
 
     fn get_velocity(&self) -> f32 {
-        self.velocity
+        DEFAULT_VELOCITY
     }
 
     fn get_max_offsets(&self) -> LinkedList<Offset> {
@@ -47,11 +45,7 @@ impl Particle for Rock {
         true
     }
 
-    fn reset_velocity(&mut self) -> () {
-        self.velocity = DEFAULT_VELOCITY;
-    }
+    fn reset_velocity(&mut self) -> () {}
 
-    fn apply_acceleration(&mut self, acc: f32) -> () {
-        self.velocity = (self.velocity + acc).clamp(DEFAULT_VELOCITY, MAX_VELOCITY);
-    }
+    fn apply_acceleration(&mut self, _acc: f32) -> () {}
 }
