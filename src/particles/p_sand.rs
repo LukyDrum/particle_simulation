@@ -6,7 +6,7 @@ use crate::particles::constants::*;
 use crate::particles::{get_near_color, Particle};
 use crate::Offset;
 
-const SAND_COLOR: u32 = 0x00E0E02D;
+const COLOR: u32 = 0xFFE0E02D;
 
 #[derive(Clone)]
 pub struct Sand {
@@ -18,7 +18,7 @@ impl Sand {
     pub fn new() -> Box<dyn Particle> {
         Box::new(Sand {
             velocity: DEFAULT_VELOCITY,
-            color: get_near_color(SAND_COLOR),
+            color: get_near_color(COLOR),
         })
     }
 }

@@ -4,7 +4,7 @@ use crate::particles::constants::*;
 use crate::particles::{get_near_color, Particle};
 use crate::Offset;
 
-const COLOR: u32 = 0x00474747;
+const COLOR: u32 = 0xFF474747;
 const DENSITY: u8 = MAX_DENSITY;
 
 #[derive(Clone)]

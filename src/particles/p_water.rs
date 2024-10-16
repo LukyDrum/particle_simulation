@@ -6,7 +6,7 @@ use crate::particles::constants::*;
 use crate::particles::{get_near_color, Particle};
 use crate::Offset;
 
-const COLOR: u32 = 0x00326ECF;
+const COLOR: u32 = 0xFF326ECF;
 const DENSITY: u8 = 128;
 
 #[derive(Clone)]
