@@ -5,6 +5,8 @@ use rand::{thread_rng, Rng};
 
 use crate::offset::Offset;
 
+pub type Neighborhood<'a> = [&'a [Box<dyn Particle>; 3]; 3];
+
 /// Returns a color similiar to the color provided
 pub fn get_near_color(color: u32) -> u32 {
     let off = thread_rng().gen_range(0..0x15);
