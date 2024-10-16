@@ -46,7 +46,7 @@ fn main() {
     let mut fps_counter = 0;
     let mut avg_fps = 0;
 
-    let mut is_sim_running: bool = false;
+    let mut is_sim_running: bool = true;
 
     // Print controls to terminal
     println!();
