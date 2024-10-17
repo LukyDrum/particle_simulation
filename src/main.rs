@@ -52,12 +52,21 @@ fn main() {
 
     let mut is_sim_running: bool = false;
 
+    simulation.bg_color = 0xFF777777;
     // Load and insert sprite
     let fit_sprite = Sprite::load("assets/fit_pixel_blue.png");
     if let Ok(sprite) = fit_sprite {
-        simulation.insert_sprite(sprite, &Offset::new(45, 50), |color| match color {
+        simulation.insert_sprite(sprite, &Offset::new(80, 50), |color| match color {
             0xFFFFFFFF => Static::new(color),
             _ => Water::with_color(color),
+        });
+    }
+
+    let fit_sprite = Sprite::load("assets/fit_pixel.png");
+    if let Ok(sprite) = fit_sprite {
+        simulation.insert_sprite(sprite, &Offset::new(20, 50), |color| match color {
+            0xFF000000 => Static::new(color),
+            _ => Sand::with_color(color),
         });
     }
 

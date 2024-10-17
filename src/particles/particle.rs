@@ -9,7 +9,7 @@ pub type Neighborhood<'a> = [&'a [Box<dyn Particle>; 3]; 3];
 
 /// Returns a color similiar to the color provided
 pub fn get_near_color(color: u32) -> u32 {
-    let off = thread_rng().gen_range(0..0x15);
+    let off = thread_rng().gen_range(0..0xF);
 
     let mut fin_color = color + off;
     fin_color += off << 8;

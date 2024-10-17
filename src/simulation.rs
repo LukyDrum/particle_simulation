@@ -43,7 +43,7 @@ enum SimUpdate {
 pub struct Simulation {
     width: usize,
     height: usize,
-    bg_color: u32,
+    pub bg_color: u32,
     particles: Vec<Option<Box<dyn Particle>>>,
     moves: FxHashMap<usize, Vec<SimMove>>, // Destination index, Moves to be done ending at that index
     updates: LinkedList<SimUpdate>,
