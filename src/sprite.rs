@@ -1,9 +1,11 @@
+use std::collections::HashSet;
+
 use image::{open, ImageError};
 
 pub struct Sprite {
-    pixels: Vec<u32>,
-    width: u32,
-    height: u32,
+    pub pixels: Vec<u32>,
+    pub width: u32,
+    pub height: u32,
 }
 
 impl Sprite {
@@ -35,5 +37,10 @@ impl Sprite {
             width,
             height,
         })
+    }
+
+    /// Returns a HashSet off all the unique colors in the sprite
+    pub fn get_unique_colors(&self) -> HashSet<u32> {
+        HashSet::from_iter(self.pixels.clone())
     }
 }
