@@ -1,9 +1,12 @@
+// MODS
 mod frame;
 mod offset;
 mod particles;
 mod simulation;
+mod sprite;
 mod test;
 
+// IMPORTS
 use std::time::SystemTime;
 
 use crate::frame::Frame;
