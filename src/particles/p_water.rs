@@ -22,6 +22,13 @@ impl Water {
             color: get_near_color(COLOR),
         })
     }
+
+    pub fn with_color(color: u32) -> Box<dyn Particle> {
+        Box::new(Water {
+            velocity: DEFAULT_VELOCITY,
+            color: get_near_color(color),
+        })
+    }
 }
 
 impl Particle for Water {

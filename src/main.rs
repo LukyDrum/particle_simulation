@@ -57,7 +57,7 @@ fn main() {
     if let Ok(sprite) = fit_sprite {
         simulation.insert_sprite(sprite, &Offset::new(45, 50), |color| match color {
             0xFFFFFFFF => Static::new(color),
-            _ => Water::new(),
+            _ => Water::with_color(color),
         });
     }
 
