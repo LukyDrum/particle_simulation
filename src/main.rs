@@ -12,8 +12,9 @@ use std::time::SystemTime;
 use crate::frame::Frame;
 use minifb::{Key, MouseButton, Window, WindowOptions};
 use offset::Offset;
-use particles::{Fly, Oil, Particle, Rock, Sand, Water};
+use particles::{Fly, Oil, Particle, Rock, Sand, Static, Water};
 use simulation::Simulation;
+use sprite::Sprite;
 
 const WIDTH: usize = 120;
 const HEIGHT: usize = 120;
@@ -49,7 +50,16 @@ fn main() {
     let mut fps_counter = 0;
     let mut avg_fps = 0;
 
-    let mut is_sim_running: bool = true;
+    let mut is_sim_running: bool = false;
+
+    // Load and insert sprite
+    let fit_sprite = Sprite::load("assets/fit_pixel_blue.png");
+    if let Ok(sprite) = fit_sprite {
+        simulation.insert_sprite(sprite, &Offset::new(45, 50), |color| match color {
+            0xFFFFFFFF => Static::new(color),
+            _ => Water::new(),
+        });
+    }
 
     // Print controls to terminal
     println!();
@@ -57,6 +67,9 @@ fn main() {
     println!("P: Pause/Resume simulation");
     println!("Space: Cycle particles");
     println!("LMB: Place particle");
+    if !is_sim_running {
+        println!("\nStarting paused!");
+    }
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
         cur_time = SystemTime::now();

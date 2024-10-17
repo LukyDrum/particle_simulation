@@ -11,6 +11,7 @@ use crate::{
     frame::Frame,
     offset::Offset,
     particles::{constants::*, Particle},
+    sprite::Sprite,
 };
 
 struct SimInfo {
@@ -158,6 +159,27 @@ impl Simulation {
         }
 
         self.clear_moves();
+    }
+
+    /// Inserts a sprite object into the simulation.
+    /// Start offset represents where the top left corner of the sprite will be.
+    /// Translate function defines how each color translates to a particle.
+    pub fn insert_sprite(
+        &mut self,
+        sprite: Sprite,
+        start_offset: &Offset,
+        translate_fn: fn(u32) -> Box<dyn Particle>,
+    ) -> () {
+        for i in 0..sprite.pixels.len() {
+            // Get color
+            let color = sprite.pixels[i];
+            // Calculate offset of the particle in the simulation
+            let y = (i as u32) / sprite.width;
+            let x = (i as u32) - (y * sprite.width);
+            let p_offset = *start_offset + Offset::new(x as i32, y as i32);
+            // Add particle into simulation
+            self.add_particle(&p_offset, translate_fn(color));
+        }
     }
 }
 
