@@ -1,18 +1,24 @@
 use std::collections::LinkedList;
 
 use rand::seq::SliceRandom;
-use rand::thread_rng;
+use rand::{thread_rng, Rng};
 
 use crate::particles::constants::*;
 use crate::particles::{get_near_color, Particle};
 use crate::Offset;
 
+use super::ParticleChange;
+
 const COLOR: u32 = 0xFF152E02;
+/// Default lifetime in number of updates
+const DEFAULT_LIFETIME: u32 = 500;
+const LIFETIME_OFF: u32 = 100;
 
 #[derive(Clone)]
 pub struct Fly {
     color: u32,
     offsets: [Offset; 4],
+    lifetime: u32,
 }
 
 impl Fly {
@@ -25,6 +31,8 @@ impl Fly {
                 Offset::new(0, 1),
                 Offset::new(0, -1),
             ],
+            lifetime: thread_rng()
+                .gen_range((DEFAULT_LIFETIME - LIFETIME_OFF)..=(DEFAULT_LIFETIME + LIFETIME_OFF)),
         })
     }
 }
@@ -65,4 +73,14 @@ impl Particle for Fly {
     fn reset_velocity(&mut self) -> () {}
 
     fn apply_acceleration(&mut self, _acc: f32) -> () {}
+
+    fn update(&self, neigborhood: super::Neighborhood) -> ParticleChange {
+        if self.lifetime == 0 {
+            ParticleChange::Changed(None)
+        } else {
+            let mut new_fly = self.clone();
+            new_fly.lifetime -= 1;
+            ParticleChange::Changed(Some(Box::new(new_fly)))
+        }
+    }
 }
