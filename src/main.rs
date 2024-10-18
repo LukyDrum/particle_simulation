@@ -1,18 +1,22 @@
+// MODS
 mod frame;
 mod offset;
-mod particle;
+mod particles;
 mod simulation;
+mod sprite;
 mod test;
 
+// IMPORTS
 use std::time::SystemTime;
 
 use crate::frame::Frame;
 use minifb::{Key, MouseButton, Window, WindowOptions};
 use offset::Offset;
-use particle::Particle;
+use particles::{Fly, Oil, Particle, Rock, Sand, Static, Water};
 use simulation::Simulation;
+use sprite::Sprite;
 
-const WIDTH: usize = 30;
+const WIDTH: usize = 120;
 const HEIGHT: usize = 120;
 const LOGICAL_SCALE: usize = 6;
 const INDICATOR_SIZE: usize = 10;
@@ -34,15 +38,11 @@ fn main() {
     window.set_target_fps(60);
 
     let mut simulation = Simulation::new(WIDTH, HEIGHT);
-    simulation.print_debug = true;
+    // simulation.print_debug = true;
 
-    let unique_particles = vec![
-        Particle::sand,
-        Particle::water,
-        Particle::rock,
-        Particle::oil,
-    ];
-    let indicator_particles: Vec<Particle> = unique_particles.iter().map(|p| p()).collect();
+    let unique_particles = vec![Sand::new, Water::new, Rock::new, Oil::new, Fly::new];
+    let indicator_particles: Vec<Box<dyn Particle>> =
+        unique_particles.iter().map(|p| p()).collect();
     let mut index = 0;
 
     let mut cur_time = SystemTime::now();
@@ -50,11 +50,45 @@ fn main() {
     let mut fps_counter = 0;
     let mut avg_fps = 0;
 
+    let mut is_sim_running: bool = false;
+
+    simulation.bg_color = 0xFF777777;
+    // Load and insert sprite
+    let fit_sprite = Sprite::load("assets/fit_pixel_blue.png");
+    if let Ok(sprite) = fit_sprite {
+        simulation.insert_sprite(sprite, &Offset::new(80, 50), |color| match color {
+            0xFFFFFFFF => Static::new(color),
+            _ => Water::with_color(color),
+        });
+    }
+
+    let fit_sprite = Sprite::load("assets/fit_pixel.png");
+    if let Ok(sprite) = fit_sprite {
+        simulation.insert_sprite(sprite, &Offset::new(20, 50), |color| match color {
+            0xFF000000 => Static::new(color),
+            _ => Sand::with_color(color),
+        });
+    }
+
+    // Print controls to terminal
+    println!();
+    println!("Controls:");
+    println!("P: Pause/Resume simulation");
+    println!("Space: Cycle particles");
+    println!("LMB: Place particle");
+    if !is_sim_running {
+        println!("\nStarting paused!");
+    }
+
     while window.is_open() && !window.is_key_down(Key::Escape) {
         cur_time = SystemTime::now();
 
         if window.is_key_pressed(Key::Space, minifb::KeyRepeat::No) {
             index = (index + 1) % unique_particles.len();
+        }
+
+        if window.is_key_pressed(Key::P, minifb::KeyRepeat::No) {
+            is_sim_running = !is_sim_running;
         }
 
         if window.get_mouse_down(MouseButton::Left) {
@@ -90,7 +124,9 @@ fn main() {
         }
 
         // Simulate and draw the particles
-        simulation.simulate_step();
+        if is_sim_running {
+            simulation.simulate_step();
+        }
         simulation.draw_to_frame(&mut frame);
 
         // Print FPS
@@ -100,7 +136,7 @@ fn main() {
             fps_counter = 0;
             last_time = cur_time;
         }
-        println!("FPS: {}", avg_fps);
+        // println!("FPS: {}", avg_fps);
 
         draw_ui_to_frame(&mut frame, &indicator_particles[index]);
 
@@ -111,7 +147,7 @@ fn main() {
     }
 }
 
-fn draw_ui_to_frame(frame: &mut Frame, current_particle: &Particle) {
+fn draw_ui_to_frame(frame: &mut Frame, current_particle: &Box<dyn Particle>) {
     for offset in get_offsets_for_square(&Offset::new(5, 5), INDICATOR_SIZE) {
         let _ = frame.draw_pixel(
             offset.x as usize,

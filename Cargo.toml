@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+dyn-clone = "1.0.17"
+image = "0.25.4"
 minifb = "0.27.0"
 rand = "0.8.5"
 rayon = "1.10.0"
