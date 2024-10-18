@@ -5,7 +5,26 @@ use rand::{thread_rng, Rng};
 
 use crate::offset::Offset;
 
-pub type Neighborhood<'a> = [&'a [Box<dyn Particle>; 3]; 3];
+pub type Neighborhood<'a> = Vec<Vec<&'a Option<Box<dyn Particle>>>>;
+
+/// Similiar to Option.
+/// Contains information if the particle has changed or not.
+pub enum ParticleChange {
+    /// Particle has changed to Some other, or to None (was destroyed)
+    Changed(Option<Box<dyn Particle>>),
+    /// No change
+    None,
+}
+
+impl ParticleChange {
+    /// Returns true if the variant is Changed
+    pub fn has_changed(&self) -> bool {
+        match self {
+            ParticleChange::Changed(_) => true,
+            ParticleChange::None => false,
+        }
+    }
+}
 
 /// Returns a color similiar to the color provided
 pub fn get_near_color(color: u32) -> u32 {
@@ -48,6 +67,12 @@ pub trait Particle: Send + Sync + DynClone {
 
     /// Returns true if the particle is completly solid (Example: rock).
     fn is_solid(&self) -> bool;
+
+    /// Returns a new state of the particle based on it's neighborhood.
+    /// By default returns None, meaning no update of inner state
+    fn update(&self, _neigborhood: Neighborhood) -> ParticleChange {
+        ParticleChange::None
+    }
 
     // Mutable
 

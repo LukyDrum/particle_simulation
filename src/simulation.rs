@@ -10,7 +10,7 @@ use std::collections::LinkedList;
 use crate::{
     frame::Frame,
     offset::Offset,
-    particles::{constants::*, Particle},
+    particles::{self, constants::*, Neighborhood, Particle, ParticleChange},
     sprite::Sprite,
 };
 
@@ -152,6 +152,9 @@ impl Simulation {
         }
 
         self.clear_moves();
+
+        // Update inner state of particles
+        self.update_inner_states();
     }
 
     /// Inserts a sprite object into the simulation.
@@ -355,6 +358,38 @@ impl Simulation {
         self.sim_info.moves_made_last_frame = 0;
     }
 
+    /// Updates the inner state of each particle
+    fn update_inner_states(&mut self) -> () {
+        // Get new particles, meaning new states
+        let new_particles: Vec<(usize, Option<Box<dyn Particle>>)> = self
+            .particles
+            .par_iter()
+            .enumerate()
+            .map(|(index, opt)| {
+                if let Some(p) = opt {
+                    let offset = self.index_to_offset(index);
+                    let neigborhood: Neighborhood = self.get_neighborhood(offset);
+                    let p_change = p.update(neigborhood);
+
+                    (index, p_change)
+                } else {
+                    (index, ParticleChange::None)
+                }
+            })
+            .filter_map(|(index, p_change)| {
+                if let ParticleChange::Changed(opt) = p_change {
+                    Some((index, opt))
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        for (index, opt) in new_particles {
+            self.particles[index] = opt;
+        }
+    }
+
     // Find the maximum offset to which a particle can either move to or switch to
     fn find_max_offset(
         &self,
@@ -419,5 +454,25 @@ impl Simulation {
     fn can_switch(p: &Box<dyn Particle>, other_p: &Box<dyn Particle>) -> bool {
         other_p.get_density() < p.get_density()
             || (p.get_velocity() > DEFAULT_VELOCITY && !other_p.is_solid())
+    }
+
+    fn get_neighborhood(&self, offset: Offset) -> Neighborhood {
+        let mut neigh: Neighborhood = vec![vec![&None; 3]; 3];
+
+        for row_off in -1..=1 {
+            for col_off in -1..=1 {
+                let new_offset = offset + Offset::new(col_off, row_off);
+                let row = (row_off + 1) as usize;
+                let col = (col_off + 1) as usize;
+
+                if self.is_within(&new_offset) {
+                    neigh[row][col] = self.get_particle(&new_offset);
+                } else {
+                    neigh[row][col] = &None;
+                }
+            }
+        }
+
+        neigh
     }
 }
