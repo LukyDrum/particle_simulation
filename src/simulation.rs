@@ -35,18 +35,12 @@ enum SimMove {
     Stop,          // Happens when particle with velocity stops in place
 }
 
-#[derive(Clone, Copy)]
-enum SimUpdate {
-    SetOnFire(usize), // Sets the particle at index on fire
-}
-
 pub struct Simulation {
     width: usize,
     height: usize,
     pub bg_color: u32,
     particles: Vec<Option<Box<dyn Particle>>>,
     moves: FxHashMap<usize, Vec<SimMove>>, // Destination index, Moves to be done ending at that index
-    updates: LinkedList<SimUpdate>,
     sim_info: SimInfo,
     pub print_debug: bool,
 }
@@ -59,7 +53,6 @@ impl Simulation {
             bg_color: 0x00000000,
             particles: vec![None; width * height],
             moves: FxHashMap::default(),
-            updates: LinkedList::new(),
             sim_info: SimInfo::new(),
             print_debug: false,
         }
