@@ -5,6 +5,7 @@ mod particles;
 mod simulation;
 mod sprite;
 mod test;
+mod utility;
 
 // IMPORTS
 use std::time::SystemTime;
@@ -12,9 +13,10 @@ use std::time::SystemTime;
 use crate::frame::Frame;
 use minifb::{Key, MouseButton, Window, WindowOptions};
 use offset::Offset;
-use particles::{Fly, Oil, Particle, Rock, Sand, Static, Water};
+use particles::{Fly, Mud, Oil, Particle, Rock, Sand, Static, Water};
 use simulation::Simulation;
 use sprite::Sprite;
+use utility::{draw_ui_to_frame, get_offsets_for_square};
 
 const WIDTH: usize = 120;
 const HEIGHT: usize = 120;
@@ -40,7 +42,14 @@ fn main() {
     let mut simulation = Simulation::new(WIDTH, HEIGHT);
     // simulation.print_debug = true;
 
-    let unique_particles = vec![Sand::new, Water::new, Rock::new, Oil::new, Fly::new];
+    let unique_particles = vec![
+        Sand::new,
+        Mud::new,
+        Water::new,
+        Rock::new,
+        Oil::new,
+        Fly::new,
+    ];
     let indicator_particles: Vec<Box<dyn Particle>> =
         unique_particles.iter().map(|p| p()).collect();
     let mut index = 0;
@@ -138,35 +147,11 @@ fn main() {
         }
         // println!("FPS: {}", avg_fps);
 
-        draw_ui_to_frame(&mut frame, &indicator_particles[index]);
+        draw_ui_to_frame(&mut frame, &indicator_particles[index], INDICATOR_SIZE);
 
         // We unwrap here as we want this code to exit if it fails. Real applications may want to handle this in a different way
         window
             .update_with_buffer(&frame.buffer, WIDTH * LOGICAL_SCALE, HEIGHT * LOGICAL_SCALE)
             .unwrap();
     }
-}
-
-fn draw_ui_to_frame(frame: &mut Frame, current_particle: &Box<dyn Particle>) {
-    for offset in get_offsets_for_square(&Offset::new(5, 5), INDICATOR_SIZE) {
-        let _ = frame.draw_pixel(
-            offset.x as usize,
-            offset.y as usize,
-            current_particle.get_color(),
-        );
-    }
-}
-
-fn get_offsets_for_square(center: &Offset, size: usize) -> Vec<Offset> {
-    let size_half = (size / 2) as i32;
-
-    let mut offsets = Vec::new();
-
-    for x in (center.x - size_half)..(center.x + size_half) {
-        for y in (center.y - size_half)..(center.y + size_half) {
-            offsets.push(Offset::new(x, y));
-        }
-    }
-
-    offsets
 }
