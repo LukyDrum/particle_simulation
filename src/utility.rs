@@ -35,10 +35,10 @@ pub fn get_offsets_for_square(center: &Offset, size: usize) -> Vec<Offset> {
     offsets
 }
 
-pub fn get_close_value<T>(middle: T, radius: T) -> T
+/// Returns a random value inside the radius with a center in middle.
+pub fn get_value_around<T>(middle: T, radius: T) -> T
 where
-    T: Add + Sub + PartialOrd + SampleUniform,
+    T: Add<Output = T> + Sub<Output = T> + SampleUniform + PartialOrd + Copy,
 {
-    let sum: T = middle + radius;
-    thread_rng().gen_range(middle..=(middle + radius))
+    thread_rng().gen_range((middle - radius)..=(middle + radius))
 }

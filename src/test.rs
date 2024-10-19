@@ -105,3 +105,18 @@ mod sprite_test {
         assert!(colors.contains(&(0xFFFFFFFF as u32)));
     }
 }
+
+#[cfg(test)]
+mod utility_test {
+    use crate::utility::*;
+
+    #[test]
+    fn value_around() -> () {
+        let middle = 42;
+        let radius = 10;
+
+        let res = get_value_around(middle, radius);
+
+        assert!(res >= (middle - radius) && res <= (middle + radius));
+    }
+}
