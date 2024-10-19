@@ -5,6 +5,7 @@ use rand::{thread_rng, Rng};
 
 use crate::particles::constants::*;
 use crate::particles::{get_near_color, Particle};
+use crate::utility::get_value_around;
 use crate::Offset;
 
 use super::ParticleChange;
@@ -31,8 +32,7 @@ impl Fly {
                 Offset::new(0, 1),
                 Offset::new(0, -1),
             ],
-            lifetime: thread_rng()
-                .gen_range((DEFAULT_LIFETIME - LIFETIME_OFF)..=(DEFAULT_LIFETIME + LIFETIME_OFF)),
+            lifetime: get_value_around(DEFAULT_LIFETIME, LIFETIME_OFF),
         })
     }
 }

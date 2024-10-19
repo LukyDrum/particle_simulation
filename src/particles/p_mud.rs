@@ -4,12 +4,14 @@ use rand::random;
 
 use crate::particles::constants::*;
 use crate::particles::{get_near_color, Particle};
+use crate::utility::get_value_around;
 use crate::Offset;
 
 use super::ParticleChange;
 
 const COLOR: u32 = 0xFF3D1812;
 const DEFAULT_SIDE_FRICTION: u8 = 16;
+const FRICTION_OFF: u8 = 4;
 
 #[derive(Clone)]
 pub struct Mud {
@@ -24,7 +26,7 @@ impl Mud {
         Box::new(Mud {
             velocity: DEFAULT_VELOCITY,
             color: get_near_color(COLOR),
-            side_friction: DEFAULT_SIDE_FRICTION,
+            side_friction: get_side_friction(),
         })
     }
 }
@@ -87,7 +89,7 @@ impl Particle for Mud {
             Some(_) => {
                 let mut new_mud = self.clone();
                 if new_mud.side_friction == 0 {
-                    new_mud.side_friction = DEFAULT_SIDE_FRICTION;
+                    new_mud.side_friction = get_side_friction();
                 } else {
                     new_mud.side_friction -= 1;
                 }
@@ -97,4 +99,8 @@ impl Particle for Mud {
             None => ParticleChange::None,
         }
     }
+}
+
+fn get_side_friction() -> u8 {
+    get_value_around(DEFAULT_SIDE_FRICTION, FRICTION_OFF)
 }
