@@ -35,10 +35,6 @@ impl Particle for Rock {
         DENSITY
     }
 
-    fn get_velocity(&self) -> f32 {
-        DEFAULT_VELOCITY
-    }
-
     fn get_max_offsets(&self) -> LinkedList<Offset> {
         LinkedList::new()
     }
@@ -50,8 +46,4 @@ impl Particle for Rock {
     fn is_solid(&self) -> bool {
         true
     }
-
-    fn reset_velocity(&mut self) -> () {}
-
-    fn apply_acceleration(&mut self, _acc: f32) -> () {}
 }

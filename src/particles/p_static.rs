@@ -26,10 +26,6 @@ impl Particle for Static {
         DENSITY
     }
 
-    fn get_velocity(&self) -> f32 {
-        0.0
-    }
-
     fn get_max_offsets(&self) -> LinkedList<Offset> {
         LinkedList::new()
     }
@@ -41,8 +37,4 @@ impl Particle for Static {
     fn is_solid(&self) -> bool {
         true
     }
-
-    fn reset_velocity(&mut self) -> () {}
-
-    fn apply_acceleration(&mut self, _acc: f32) -> () {}
 }
