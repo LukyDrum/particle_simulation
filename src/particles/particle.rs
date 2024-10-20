@@ -5,7 +5,7 @@ use rand::{thread_rng, Rng};
 
 use crate::offset::Offset;
 
-use super::Burnability;
+use super::{constants::DEFAULT_VELOCITY, Burnability};
 
 pub type Neighborhood<'a> = Vec<Vec<&'a Option<Box<dyn Particle>>>>;
 
@@ -58,7 +58,9 @@ pub trait Particle: Send + Sync + DynClone {
     fn get_density(&self) -> u8;
 
     /// Returns the current velocity of this particle.
-    fn get_velocity(&self) -> f32;
+    fn get_velocity(&self) -> f32 {
+        DEFAULT_VELOCITY
+    }
 
     /// Returns a list of the maximum offsets to which the particle would like to move to.
     /// Example: A maximum offset of (5, 0) means that the particle would like to move 5 positions to right.
