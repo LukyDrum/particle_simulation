@@ -1,4 +1,5 @@
 /// Describes how does the particle burn.
+#[derive(Clone, Copy)]
 pub enum Burnability {
     /// The particle is currently on fire, can light up other particles.
     /// Contains a durability parameter (How long before the particle burns down).
