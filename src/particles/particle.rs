@@ -86,8 +86,8 @@ pub trait Particle: Send + Sync + DynClone {
     // Mutable
 
     /// Resets the particle velocity to the DEFAULT_VELOCITY.
-    fn reset_velocity(&mut self) -> ();
+    fn reset_velocity(&mut self) -> () {}
 
     /// Applies the provided acceleration to the velocity of this particle.
-    fn apply_acceleration(&mut self, acc: f32) -> ();
+    fn apply_acceleration(&mut self, _acc: f32) -> () {}
 }
