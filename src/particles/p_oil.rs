@@ -10,7 +10,7 @@ use super::{Burnability, Neighborhood, ParticleChange};
 
 const COLOR: u32 = 0xFF996E17;
 const DENSITY: u8 = 120;
-const BURNABILITY_TIME: u8 = 5;
+const BURNABILITY_TIME: u8 = 32;
 
 #[derive(Clone)]
 pub struct Oil {
@@ -103,6 +103,8 @@ impl Particle for Oil {
             if let Some(neigh) = opt {
                 if let Burnability::IsBurning(_) = neigh.get_burnability() {
                     let mut new_p = self.clone();
+                    // Change color to FIRE_COLOR
+                    new_p.color = get_near_color(FIRE_COLOR);
                     new_p.burnability = Burnability::IsBurning(BURNABILITY_TIME);
                     return ParticleChange::Changed(Some(Box::new(new_p)));
                 }
