@@ -1,7 +1,7 @@
 use std::collections::LinkedList;
 
 use rand::seq::SliceRandom;
-use rand::{thread_rng, Rng};
+use rand::thread_rng;
 
 use crate::particles::constants::*;
 use crate::particles::{get_near_color, Particle};
@@ -74,7 +74,7 @@ impl Particle for Fly {
 
     fn apply_acceleration(&mut self, _acc: f32) -> () {}
 
-    fn update(&self, neigborhood: super::Neighborhood) -> ParticleChange {
+    fn update(&self, _neigborhood: super::Neighborhood) -> ParticleChange {
         if self.lifetime == 0 {
             ParticleChange::Changed(None)
         } else {
