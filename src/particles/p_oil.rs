@@ -6,13 +6,17 @@ use crate::particles::constants::*;
 use crate::particles::{get_near_color, Particle};
 use crate::Offset;
 
+use super::{Burnability, Neighborhood, ParticleChange};
+
 const COLOR: u32 = 0xFF996E17;
 const DENSITY: u8 = 120;
+const BURNABILITY_TIME: u8 = 5;
 
 #[derive(Clone)]
 pub struct Oil {
     velocity: f32,
     color: u32,
+    burnability: Burnability,
 }
 
 impl Oil {
@@ -20,6 +24,7 @@ impl Oil {
         Box::new(Oil {
             velocity: DEFAULT_VELOCITY,
             color: get_near_color(COLOR),
+            burnability: Burnability::CanBurn,
         })
     }
 
@@ -27,6 +32,7 @@ impl Oil {
         Box::new(Oil {
             velocity: DEFAULT_VELOCITY,
             color: get_near_color(color),
+            burnability: Burnability::CanBurn,
         })
     }
 }
@@ -68,11 +74,42 @@ impl Particle for Oil {
         false
     }
 
+    fn get_burnability(&self) -> Burnability {
+        self.burnability
+    }
+
     fn reset_velocity(&mut self) -> () {
         self.velocity = DEFAULT_VELOCITY;
     }
 
     fn apply_acceleration(&mut self, acc: f32) -> () {
         self.velocity = (self.velocity + acc).clamp(DEFAULT_VELOCITY, MAX_VELOCITY);
+    }
+
+    fn update(&self, neigborhood: Neighborhood) -> ParticleChange {
+        // If the particle is burning => Destroy if time reached 0 else decrease the time by 1
+        if let Burnability::IsBurning(time) = self.burnability {
+            if time == 0 {
+                return ParticleChange::Changed(None);
+            } else {
+                let mut new_p = self.clone();
+                new_p.burnability = Burnability::IsBurning(time - 1);
+                return ParticleChange::Changed(Some(Box::new(new_p)));
+            }
+        }
+
+        // Check neighbors, if any one of them is burning => set this particle as burning with default time.
+        for opt in neigborhood.iter().flatten() {
+            if let Some(neigh) = opt {
+                if let Burnability::IsBurning(_) = neigh.get_burnability() {
+                    let mut new_p = self.clone();
+                    new_p.burnability = Burnability::IsBurning(BURNABILITY_TIME);
+                    return ParticleChange::Changed(Some(Box::new(new_p)));
+                }
+            }
+        }
+
+        // None of the above met => no change
+        ParticleChange::None
     }
 }
