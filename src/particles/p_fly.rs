@@ -1,25 +1,27 @@
 use std::collections::LinkedList;
 
 use rand::seq::SliceRandom;
-use rand::thread_rng;
+use rand::{random, thread_rng};
 
 use crate::particles::constants::*;
 use crate::particles::{get_near_color, Particle};
 use crate::utility::get_value_around;
 use crate::Offset;
 
-use super::ParticleChange;
+use super::{Burnability, ParticleChange};
 
 const COLOR: u32 = 0xFF152E02;
 /// Default lifetime in number of updates
 const DEFAULT_LIFETIME: u32 = 500;
 const LIFETIME_OFF: u32 = 100;
+const BURNABILITY_TIME: u8 = 10;
 
 #[derive(Clone)]
 pub struct Fly {
     color: u32,
     offsets: [Offset; 4],
     lifetime: u32,
+    burnability: Burnability,
 }
 
 impl Fly {
@@ -33,6 +35,7 @@ impl Fly {
                 Offset::new(0, -1),
             ],
             lifetime: get_value_around(DEFAULT_LIFETIME, LIFETIME_OFF),
+            burnability: Burnability::CanBurn,
         })
     }
 }
@@ -70,17 +73,48 @@ impl Particle for Fly {
         true
     }
 
-    fn reset_velocity(&mut self) -> () {}
+    fn get_burnability(&self) -> Burnability {
+        self.burnability
+    }
 
-    fn apply_acceleration(&mut self, _acc: f32) -> () {}
-
-    fn update(&self, _neigborhood: super::Neighborhood) -> ParticleChange {
+    fn update(&self, neigborhood: super::Neighborhood) -> ParticleChange {
+        // Lifetime reached 0 => fly is dead
         if self.lifetime == 0 {
-            ParticleChange::Changed(None)
-        } else {
-            let mut new_fly = self.clone();
-            new_fly.lifetime -= 1;
-            ParticleChange::Changed(Some(Box::new(new_fly)))
+            return ParticleChange::Changed(None);
         }
+
+        // Clone fly and decrease it's lifetime by 1
+        let mut new_fly = self.clone();
+        new_fly.lifetime -= 1;
+
+        // If the particle is burning => Destroy if time reached 0 else decrease the time by 1
+        if let Burnability::IsBurning(time) = self.burnability {
+            if time == 0 {
+                return ParticleChange::Changed(None);
+            } else {
+                let mut new_p = self.clone();
+                new_p.burnability = Burnability::IsBurning(time - 1);
+                return ParticleChange::Changed(Some(Box::new(new_p)));
+            }
+        }
+
+        // Check neighbors, if any one of them is burning => set this particle as burning with default time.
+        for opt in neigborhood.iter().flatten() {
+            if let Some(neigh) = opt {
+                if let Burnability::IsBurning(_) = neigh.get_burnability() {
+                    // Chance not to catch fire
+                    if random() {
+                        continue;
+                    }
+
+                    // Change color to FIRE_COLOR
+                    new_fly.color = get_near_color(FIRE_COLOR);
+                    new_fly.burnability = Burnability::IsBurning(BURNABILITY_TIME);
+                    break;
+                }
+            }
+        }
+
+        ParticleChange::Changed(Some(Box::new(new_fly)))
     }
 }
