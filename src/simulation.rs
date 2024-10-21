@@ -10,7 +10,7 @@ use std::collections::LinkedList;
 use crate::{
     frame::Frame,
     offset::Offset,
-    particles::{self, constants::*, Neighborhood, Particle, ParticleChange},
+    particles::{constants::*, Neighborhood, Particle, ParticleChange},
     sprite::Sprite,
 };
 

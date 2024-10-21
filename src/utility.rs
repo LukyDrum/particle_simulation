@@ -1,9 +1,6 @@
 use std::ops::{Add, Sub};
 
-use rand::{
-    distributions::uniform::{SampleRange, SampleUniform},
-    thread_rng, Rng,
-};
+use rand::{distributions::uniform::SampleUniform, thread_rng, Rng};
 
 use crate::{frame::Frame, offset::Offset, particles::Particle};
 
