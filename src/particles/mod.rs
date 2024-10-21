@@ -7,6 +7,7 @@ mod p_sand;
 mod p_spark;
 mod p_static;
 mod p_water;
+mod p_wood;
 mod particle;
 /// Various properties that a particle may inhibit.
 mod properties;
@@ -19,5 +20,6 @@ pub use p_sand::Sand;
 pub use p_spark::Spark;
 pub use p_static::Static;
 pub use p_water::Water;
+pub use p_wood::Wood;
 pub use particle::{get_near_color, Neighborhood, Particle, ParticleChange};
 pub use properties::Burnability;

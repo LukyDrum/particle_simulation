@@ -13,7 +13,7 @@ use std::time::SystemTime;
 use crate::frame::Frame;
 use minifb::{Key, MouseButton, Window, WindowOptions};
 use offset::Offset;
-use particles::{Fly, Mud, Oil, Particle, Rock, Sand, Spark, Static, Water};
+use particles::{Fly, Mud, Oil, Particle, Rock, Sand, Spark, Static, Water, Wood};
 use simulation::Simulation;
 use sprite::Sprite;
 use utility::{draw_ui_to_frame, get_offsets_for_square};
@@ -50,6 +50,7 @@ fn main() {
         Oil::new,
         Fly::new,
         Spark::new,
+        Wood::new,
     ];
     let indicator_particles: Vec<Box<dyn Particle>> =
         unique_particles.iter().map(|p| p()).collect();
