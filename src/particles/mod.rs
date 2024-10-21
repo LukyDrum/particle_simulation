@@ -8,6 +8,7 @@ mod p_spark;
 mod p_static;
 mod p_water;
 mod particle;
+/// Various properties that a particle may inhibit.
 mod properties;
 
 pub use p_fly::Fly;
