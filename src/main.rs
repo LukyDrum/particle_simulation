@@ -95,6 +95,7 @@ fn main() {
 
         if window.is_key_pressed(Key::Space, minifb::KeyRepeat::No) {
             index = (index + 1) % unique_particles.len();
+            println!("Particle: {}", indicator_particles[index].get_name());
         }
 
         if window.is_key_pressed(Key::P, minifb::KeyRepeat::No) {
