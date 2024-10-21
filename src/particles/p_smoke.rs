@@ -2,7 +2,6 @@ use std::collections::LinkedList;
 
 use rand::random;
 
-use crate::particles::constants::*;
 use crate::particles::{get_near_color, Particle};
 use crate::utility::get_value_around;
 use crate::Offset;
