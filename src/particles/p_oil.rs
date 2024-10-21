@@ -97,6 +97,7 @@ impl Particle for Oil {
                 return ParticleChange::Changed(None);
             } else {
                 let mut new_p = self.clone();
+                new_p.color = get_near_color(FIRE_COLOR); // Make the color change a little
                 new_p.burnability = self.burnability.decreased_by(1);
                 return ParticleChange::Changed(Some(Box::new(new_p)));
             }
