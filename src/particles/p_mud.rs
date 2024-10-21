@@ -9,7 +9,7 @@ use crate::Offset;
 
 use super::ParticleChange;
 
-const COLOR: u32 = 0xFF3D1812;
+const COLOR: u32 = 0xFF91473D;
 const DEFAULT_SIDE_FRICTION: u8 = 16;
 const FRICTION_OFF: u8 = 4;
 
