@@ -6,7 +6,7 @@ use crate::particles::constants::*;
 use crate::particles::{get_near_color, Particle};
 use crate::Offset;
 
-use super::{Burnability, Neighborhood, ParticleChange};
+use super::{Burnability, Neighborhood, ParticleChange, Smoke};
 
 const COLOR: u32 = 0xFF996E17;
 const DENSITY: u8 = 120;
@@ -94,7 +94,12 @@ impl Particle for Oil {
         // If the particle is burning => Destroy if time reached 0 else decrease the time by 1
         if let Burnability::IsBurning(time) = self.burnability {
             if time == 0 {
-                return ParticleChange::Changed(None);
+                // There is a chance that a smoke particle will spawn
+                if random() {
+                    return ParticleChange::Changed(Some(Smoke::new()));
+                } else {
+                    return ParticleChange::Changed(None);
+                }
             } else {
                 let mut new_p = self.clone();
                 new_p.color = get_near_color(FIRE_COLOR); // Make the color change a little
