@@ -10,6 +10,7 @@ use crate::Offset;
 use super::ParticleChange;
 
 const COLOR: u32 = 0xFFB1B6BD;
+const DENSITY: u8 = 20;
 /// Default lifetime in number of updates
 const DEFAULT_LIFETIME: u32 = 750;
 const LIFETIME_OFF: u32 = 300;
@@ -39,7 +40,7 @@ impl Particle for Smoke {
     }
 
     fn get_density(&self) -> u8 {
-        MAX_DENSITY
+        DENSITY
     }
 
     fn get_max_offsets(&self) -> LinkedList<Offset> {
