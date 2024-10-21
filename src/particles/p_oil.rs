@@ -38,6 +38,10 @@ impl Oil {
 }
 
 impl Particle for Oil {
+    fn get_name(&self) -> &str {
+        "Oil"
+    }
+
     fn get_color(&self) -> u32 {
         self.color
     }

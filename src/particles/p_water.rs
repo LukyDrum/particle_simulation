@@ -32,6 +32,10 @@ impl Water {
 }
 
 impl Particle for Water {
+    fn get_name(&self) -> &str {
+        "Water"
+    }
+
     fn get_color(&self) -> u32 {
         self.color
     }

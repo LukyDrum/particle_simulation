@@ -31,6 +31,10 @@ impl Sand {
 }
 
 impl Particle for Sand {
+    fn get_name(&self) -> &str {
+        "Sand"
+    }
+
     fn get_color(&self) -> u32 {
         self.color
     }

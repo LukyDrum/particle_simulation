@@ -41,6 +41,10 @@ impl Fly {
 }
 
 impl Particle for Fly {
+    fn get_name(&self) -> &str {
+        "Fly"
+    }
+
     fn get_color(&self) -> u32 {
         self.color
     }

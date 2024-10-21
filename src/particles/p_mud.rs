@@ -32,6 +32,10 @@ impl Mud {
 }
 
 impl Particle for Mud {
+    fn get_name(&self) -> &str {
+        "Mud"
+    }
+
     fn get_color(&self) -> u32 {
         self.color
     }

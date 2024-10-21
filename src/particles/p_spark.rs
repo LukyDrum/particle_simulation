@@ -33,6 +33,10 @@ impl Spark {
 }
 
 impl Particle for Spark {
+    fn get_name(&self) -> &str {
+        "Spark"
+    }
+
     fn get_color(&self) -> u32 {
         self.color
     }

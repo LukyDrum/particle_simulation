@@ -27,6 +27,10 @@ impl Rock {
 }
 
 impl Particle for Rock {
+    fn get_name(&self) -> &str {
+        "Rock"
+    }
+
     fn get_color(&self) -> u32 {
         self.color
     }

@@ -50,6 +50,11 @@ pub trait Particle: Send + Sync + DynClone {
 
     // Immutable
 
+    /// Returns the name of the particle.
+    fn get_name(&self) -> &str {
+        "NO NAME"
+    }
+
     /// Returns the color of the particle.
     fn get_color(&self) -> u32;
 

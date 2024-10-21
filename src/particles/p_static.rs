@@ -18,6 +18,10 @@ impl Static {
 }
 
 impl Particle for Static {
+    fn get_name(&self) -> &str {
+        "Static"
+    }
+
     fn get_color(&self) -> u32 {
         self.color
     }
