@@ -63,7 +63,7 @@ impl Particle for Smoke {
     }
 
     fn is_solid(&self) -> bool {
-        true
+        false
     }
 
     fn update(&self, _neigborhood: super::Neighborhood) -> ParticleChange {
