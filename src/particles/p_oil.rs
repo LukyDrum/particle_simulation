@@ -93,7 +93,7 @@ impl Particle for Oil {
                 return ParticleChange::Changed(None);
             } else {
                 let mut new_p = self.clone();
-                new_p.burnability = Burnability::IsBurning(time - 1);
+                new_p.burnability = self.burnability.decreased_by(1);
                 return ParticleChange::Changed(Some(Box::new(new_p)));
             }
         }

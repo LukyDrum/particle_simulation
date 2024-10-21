@@ -92,7 +92,7 @@ impl Particle for Fly {
             if time == 0 {
                 return ParticleChange::Changed(None);
             } else {
-                new_fly.burnability = Burnability::IsBurning(time - 1);
+                new_fly.burnability = self.burnability.decreased_by(1);
                 return ParticleChange::Changed(Some(Box::new(new_fly)));
             }
         }
