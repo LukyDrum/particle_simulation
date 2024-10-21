@@ -18,12 +18,6 @@ impl Rock {
             color: get_near_color(COLOR),
         })
     }
-
-    pub fn with_color(color: u32) -> Box<dyn Particle> {
-        Box::new(Rock {
-            color: get_near_color(color),
-        })
-    }
 }
 
 impl Particle for Rock {
