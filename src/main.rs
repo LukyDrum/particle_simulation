@@ -18,8 +18,8 @@ use simulation::Simulation;
 use sprite::Sprite;
 use utility::{draw_ui_to_frame, get_offsets_for_square};
 
-const WIDTH: usize = 300;
-const HEIGHT: usize = 300;
+const WIDTH: usize = 200;
+const HEIGHT: usize = 200;
 const LOGICAL_SCALE: usize = 3;
 const INDICATOR_SIZE: usize = 10;
 const BRUSH_SIZE: usize = 5;
