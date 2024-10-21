@@ -92,9 +92,8 @@ impl Particle for Fly {
             if time == 0 {
                 return ParticleChange::Changed(None);
             } else {
-                let mut new_p = self.clone();
-                new_p.burnability = Burnability::IsBurning(time - 1);
-                return ParticleChange::Changed(Some(Box::new(new_p)));
+                new_fly.burnability = Burnability::IsBurning(time - 1);
+                return ParticleChange::Changed(Some(Box::new(new_fly)));
             }
         }
 
