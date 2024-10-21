@@ -63,7 +63,7 @@ fn main() {
 
     let mut is_sim_running: bool = false;
 
-    simulation.bg_color = 0xFF777777;
+    simulation.bg_color = 0xFFD1FFFC;
     // Load and insert sprite
     let fit_sprite = Sprite::load("assets/fit_pixel_blue.png");
     if let Ok(sprite) = fit_sprite {
