@@ -68,19 +68,27 @@ impl Particle for Spark {
         self.burnability
     }
 
-    fn update(&self, _neigborhood: super::Neighborhood) -> ParticleChange {
+    fn update(&self, neigborhood: super::Neighborhood) -> ParticleChange {
         // Decrease burnability time or destroy the particle based on time left
+        let mut new_spark = self.clone();
         if let Burnability::IsBurning(time) = self.burnability {
             if time == 0 {
                 return ParticleChange::Changed(None);
             } else {
-                let mut new_spark = self.clone();
                 new_spark.burnability = Burnability::IsBurning(time - 1);
-                return ParticleChange::Changed(Some(Box::new(new_spark)));
             }
         }
 
-        // If none of the above was met
-        ParticleChange::None
+        // Check for AntiBurn
+        for opt in neigborhood.iter().flatten() {
+            if let Some(neigh) = opt {
+                if let Burnability::AntiBurn = neigh.get_burnability() {
+                    // Neighbor particle is anti burn => this particle gets destroyed
+                    return ParticleChange::Changed(None);
+                }
+            }
+        }
+
+        ParticleChange::Changed(Some(Box::new(new_spark)))
     }
 }

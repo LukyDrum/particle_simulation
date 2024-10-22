@@ -6,6 +6,8 @@ pub enum Burnability {
     IsBurning(u8),
     /// The particle can burn if next to fire.
     CanBurn,
+    /// Not only the particle does not burn (like None) but also destroy other burning particles
+    AntiBurn,
     /// The particle does not react to fire in any way.
     None,
 }

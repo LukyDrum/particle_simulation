@@ -6,6 +6,8 @@ use crate::particles::constants::*;
 use crate::particles::{get_near_color, Particle};
 use crate::Offset;
 
+use super::{Burnability, Neighborhood, ParticleChange, Vapor};
+
 const COLOR: u32 = 0xFF326ECF;
 const DENSITY: u8 = 128;
 
@@ -72,11 +74,30 @@ impl Particle for Water {
         false
     }
 
+    fn get_burnability(&self) -> Burnability {
+        Burnability::AntiBurn
+    }
+
     fn reset_velocity(&mut self) -> () {
         self.velocity = DEFAULT_VELOCITY;
     }
 
     fn apply_acceleration(&mut self, acc: f32) -> () {
         self.velocity = (self.velocity + acc).clamp(DEFAULT_VELOCITY, MAX_VELOCITY);
+    }
+
+    fn update(&self, neigborhood: Neighborhood) -> ParticleChange {
+        // Check neighbors, if any one of them is burning => change this to vapor
+        for opt in neigborhood.iter().flatten() {
+            if let Some(neigh) = opt {
+                if let Burnability::IsBurning(_) = neigh.get_burnability() {
+                    // Neighbor particle is burning causes water to evaporate
+                    return ParticleChange::Changed(Some(Vapor::new()));
+                }
+            }
+        }
+
+        // None of the above met => no change
+        ParticleChange::None
     }
 }
