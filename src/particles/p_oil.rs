@@ -6,11 +6,12 @@ use crate::particles::constants::*;
 use crate::particles::{get_near_color, Particle};
 use crate::Offset;
 
+use super::properties::PropertyCheckResult;
 use super::{Burnability, Neighborhood, ParticleChange, Smoke};
 
 const COLOR: u32 = 0xFF996E17;
 const DENSITY: u8 = 120;
-const BURNABILITY_TIME: u8 = 32;
+const BURNABILITY_TIME: u8 = 100;
 
 #[derive(Clone)]
 pub struct Oil {
@@ -82,6 +83,10 @@ impl Particle for Oil {
         self.burnability
     }
 
+    fn set_burnability(&mut self, new_burnability: Burnability) -> () {
+        self.burnability = new_burnability;
+    }
+
     fn reset_velocity(&mut self) -> () {
         self.velocity = DEFAULT_VELOCITY;
     }
@@ -91,42 +96,20 @@ impl Particle for Oil {
     }
 
     fn update(&self, neigborhood: Neighborhood) -> ParticleChange {
-        // If the particle is burning => Destroy if time reached 0 else decrease the time by 1
-        if let Burnability::IsBurning(time) = self.burnability {
-            if time == 0 {
-                // There is a chance that a smoke particle will spawn
-                if random() {
-                    return ParticleChange::Changed(Some(Smoke::new()));
-                } else {
-                    return ParticleChange::Changed(None);
+        let mut new_oil = self.clone();
+
+        let res = Burnability::check(&mut new_oil, &neigborhood, BURNABILITY_TIME, true);
+
+        match res {
+            PropertyCheckResult::Updated => {
+                if let Burnability::IsBurning(_) = new_oil.get_burnability() {
+                    new_oil.color = get_near_color(FIRE_COLOR);
                 }
-            } else {
-                let mut new_p = self.clone();
-                new_p.color = get_near_color(FIRE_COLOR); // Make the color change a little
-                new_p.burnability = self.burnability.decreased_by(1);
-                return ParticleChange::Changed(Some(Box::new(new_p)));
+
+                ParticleChange::Changed(Some(Box::new(new_oil)))
             }
+            PropertyCheckResult::Destroyed => ParticleChange::Changed(Some(Smoke::new())),
+            PropertyCheckResult::None => ParticleChange::None,
         }
-
-        // Check neighbors, if any one of them is burning => set this particle as burning with default time.
-        for opt in neigborhood.iter().flatten() {
-            if let Some(neigh) = opt {
-                if let Burnability::IsBurning(_) = neigh.get_burnability() {
-                    // Chance not to catch fire
-                    if random() {
-                        continue;
-                    }
-
-                    let mut new_p = self.clone();
-                    // Change color to FIRE_COLOR
-                    new_p.color = get_near_color(FIRE_COLOR);
-                    new_p.burnability = Burnability::IsBurning(BURNABILITY_TIME);
-                    return ParticleChange::Changed(Some(Box::new(new_p)));
-                }
-            }
-        }
-
-        // None of the above met => no change
-        ParticleChange::None
     }
 }

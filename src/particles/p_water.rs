@@ -87,17 +87,23 @@ impl Particle for Water {
     }
 
     fn update(&self, neigborhood: Neighborhood) -> ParticleChange {
-        // Check neighbors, if any one of them is burning => change this to vapor
+        // Check number of neighbors that are IsBurning and AntiBurn
+        let mut count = 0;
         for opt in neigborhood.iter().flatten() {
             if let Some(neigh) = opt {
-                if let Burnability::IsBurning(_) = neigh.get_burnability() {
-                    // Neighbor particle is burning causes water to evaporate
-                    return ParticleChange::Changed(Some(Vapor::new()));
+                match neigh.get_burnability() {
+                    Burnability::IsBurning(_) => count += 1,
+                    Burnability::AntiBurn => count -= 1,
+                    _ => {}
                 }
             }
         }
 
-        // None of the above met => no change
-        ParticleChange::None
+        if count > 0 {
+            ParticleChange::Changed(Some(Vapor::new()))
+        } else {
+            // None of the above met => no change
+            ParticleChange::None
+        }
     }
 }

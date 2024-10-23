@@ -8,7 +8,8 @@ use crate::particles::{get_near_color, Particle};
 use crate::utility::get_value_around;
 use crate::Offset;
 
-use super::{Burnability, ParticleChange};
+use super::properties::PropertyCheckResult;
+use super::{Burnability, Neighborhood, ParticleChange};
 
 const COLOR: u32 = FIRE_COLOR;
 /// Default lifetime in number of updates
@@ -64,39 +65,25 @@ impl Particle for Spark {
     fn is_solid(&self) -> bool {
         true
     }
+
     fn get_burnability(&self) -> Burnability {
         self.burnability
     }
 
-    fn update(&self, neigborhood: super::Neighborhood) -> ParticleChange {
+    fn set_burnability(&mut self, new_burnability: Burnability) -> () {
+        self.burnability = new_burnability;
+    }
+
+    fn update(&self, neigborhood: Neighborhood) -> ParticleChange {
         // Decrease burnability time or destroy the particle based on time left
         let mut new_spark = self.clone();
-        if let Burnability::IsBurning(time) = self.burnability {
-            if time == 0 {
-                return ParticleChange::Changed(None);
-            } else {
-                new_spark.burnability = Burnability::IsBurning(time - 1);
-            }
-        }
 
-        // Check how many neighbors are IsBurning and how many are AntiBurn
-        // If there is more of IsBurning => particle will keep burning
-        // If there is more AntiBurn => particle will cease to be
-        let mut neighbors_burn = 0; // if > 0 => more are IsBurning
-        for opt in neigborhood.iter().flatten() {
-            if let Some(neigh) = opt {
-                match neigh.get_burnability() {
-                    Burnability::IsBurning(_) => neighbors_burn += 1,
-                    Burnability::AntiBurn => neighbors_burn -= 1,
-                    _ => {}
-                }
-            }
-        }
-        // If more of the neighbors are AntiBurn => destroy particle
-        if neighbors_burn <= 0 {
-            return ParticleChange::Changed(None);
-        }
+        let res = Burnability::check(&mut new_spark, &neigborhood, DEFAULT_LIFETIME, true);
 
-        ParticleChange::Changed(Some(Box::new(new_spark)))
+        match res {
+            PropertyCheckResult::Updated => ParticleChange::Changed(Some(Box::new(new_spark))),
+            PropertyCheckResult::Destroyed => ParticleChange::Changed(None),
+            PropertyCheckResult::None => ParticleChange::None,
+        }
     }
 }

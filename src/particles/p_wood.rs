@@ -1,16 +1,15 @@
 use std::collections::LinkedList;
 
-use rand::random;
-
 use crate::particles::constants::*;
 use crate::particles::{get_near_color, Particle};
 use crate::Offset;
 
+use super::properties::PropertyCheckResult;
 use super::{Burnability, Neighborhood, ParticleChange};
 
 const COLOR: u32 = 0xFF3D1812;
 const DENSITY: u8 = MAX_DENSITY;
-const BURNABILITY_TIME: u8 = 60;
+const BURNABILITY_TIME: u8 = 150;
 
 #[derive(Clone)]
 pub struct Wood {
@@ -56,38 +55,25 @@ impl Particle for Wood {
         self.burnability
     }
 
+    fn set_burnability(&mut self, new_burnability: Burnability) -> () {
+        self.burnability = new_burnability;
+    }
+
     fn update(&self, neigborhood: Neighborhood) -> ParticleChange {
-        // If the particle is burning => Destroy if time reached 0 else decrease the time by 1
-        if let Burnability::IsBurning(time) = self.burnability {
-            if time == 0 {
-                return ParticleChange::Changed(None);
-            } else {
-                let mut new_p = self.clone();
-                new_p.color = get_near_color(FIRE_COLOR); // Make the color change a little
-                new_p.burnability = self.burnability.decreased_by(1);
-                return ParticleChange::Changed(Some(Box::new(new_p)));
-            }
-        }
+        let mut new_wood = self.clone();
 
-        // Check neighbors, if any one of them is burning => set this particle as burning with default time.
-        for opt in neigborhood.iter().flatten() {
-            if let Some(neigh) = opt {
-                if let Burnability::IsBurning(_) = neigh.get_burnability() {
-                    // Chance not to catch fire
-                    if random() {
-                        continue;
-                    }
+        let res = Burnability::check(&mut new_wood, &neigborhood, BURNABILITY_TIME, true);
 
-                    let mut new_p = self.clone();
-                    // Change color to FIRE_COLOR
-                    new_p.color = get_near_color(FIRE_COLOR);
-                    new_p.burnability = Burnability::IsBurning(BURNABILITY_TIME);
-                    return ParticleChange::Changed(Some(Box::new(new_p)));
+        match res {
+            PropertyCheckResult::Updated => {
+                if let Burnability::IsBurning(_) = new_wood.get_burnability() {
+                    new_wood.color = get_near_color(FIRE_COLOR);
                 }
-            }
-        }
 
-        // None of the above met => no change
-        ParticleChange::None
+                ParticleChange::Changed(Some(Box::new(new_wood)))
+            }
+            PropertyCheckResult::Destroyed => ParticleChange::Changed(None),
+            PropertyCheckResult::None => ParticleChange::None,
+        }
     }
 }

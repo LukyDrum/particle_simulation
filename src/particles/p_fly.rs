@@ -1,13 +1,14 @@
 use std::collections::LinkedList;
 
 use rand::seq::SliceRandom;
-use rand::{random, thread_rng};
+use rand::thread_rng;
 
 use crate::particles::constants::*;
 use crate::particles::{get_near_color, Particle};
 use crate::utility::get_value_around;
 use crate::Offset;
 
+use super::properties::PropertyCheckResult;
 use super::{Burnability, ParticleChange};
 
 const COLOR: u32 = 0xFF152E02;
@@ -81,6 +82,10 @@ impl Particle for Fly {
         self.burnability
     }
 
+    fn set_burnability(&mut self, new_burnability: Burnability) -> () {
+        self.burnability = new_burnability;
+    }
+
     fn update(&self, neigborhood: super::Neighborhood) -> ParticleChange {
         // Lifetime reached 0 => fly is dead
         if self.lifetime == 0 {
@@ -91,33 +96,18 @@ impl Particle for Fly {
         let mut new_fly = self.clone();
         new_fly.lifetime -= 1;
 
-        // If the particle is burning => Destroy if time reached 0 else decrease the time by 1
-        if let Burnability::IsBurning(time) = self.burnability {
-            if time == 0 {
-                return ParticleChange::Changed(None);
-            } else {
-                new_fly.burnability = self.burnability.decreased_by(1);
-                return ParticleChange::Changed(Some(Box::new(new_fly)));
-            }
-        }
+        let res = Burnability::check(&mut new_fly, &neigborhood, BURNABILITY_TIME, true);
 
-        // Check neighbors, if any one of them is burning => set this particle as burning with default time.
-        for opt in neigborhood.iter().flatten() {
-            if let Some(neigh) = opt {
-                if let Burnability::IsBurning(_) = neigh.get_burnability() {
-                    // Chance not to catch fire
-                    if random() {
-                        continue;
-                    }
-
-                    // Change color to FIRE_COLOR
+        match res {
+            PropertyCheckResult::Updated => {
+                if let Burnability::IsBurning(_) = new_fly.get_burnability() {
                     new_fly.color = get_near_color(FIRE_COLOR);
-                    new_fly.burnability = Burnability::IsBurning(BURNABILITY_TIME);
-                    break;
                 }
-            }
-        }
 
-        ParticleChange::Changed(Some(Box::new(new_fly)))
+                ParticleChange::Changed(Some(Box::new(new_fly)))
+            }
+            PropertyCheckResult::Destroyed => ParticleChange::Changed(None),
+            PropertyCheckResult::None => ParticleChange::None,
+        }
     }
 }

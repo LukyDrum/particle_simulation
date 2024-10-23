@@ -77,10 +77,14 @@ pub trait Particle: Send + Sync + DynClone {
     /// Returns true if the particle is completly solid (Example: rock).
     fn is_solid(&self) -> bool;
 
+    // PROPERTIES
+
     /// Returns the Burnability of this particle. By default is Burnability::None.
     fn get_burnability(&self) -> Burnability {
         Burnability::None
     }
+
+    fn set_burnability(&mut self, _new_burnability: Burnability) -> () {}
 
     /// Returns a new state of the particle based on it's neighborhood.
     /// By default returns None, meaning no update of inner state
