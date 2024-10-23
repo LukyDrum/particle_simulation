@@ -79,14 +79,22 @@ impl Particle for Spark {
             }
         }
 
-        // Check for AntiBurn
+        // Check how many neighbors are IsBurning and how many are AntiBurn
+        // If there is more of IsBurning => particle will keep burning
+        // If there is more AntiBurn => particle will cease to be
+        let mut neighbors_burn = 0; // if > 0 => more are IsBurning
         for opt in neigborhood.iter().flatten() {
             if let Some(neigh) = opt {
-                if let Burnability::AntiBurn = neigh.get_burnability() {
-                    // Neighbor particle is anti burn => this particle gets destroyed
-                    return ParticleChange::Changed(None);
+                match neigh.get_burnability() {
+                    Burnability::IsBurning(_) => neighbors_burn += 1,
+                    Burnability::AntiBurn => neighbors_burn -= 1,
+                    _ => {}
                 }
             }
+        }
+        // If more of the neighbors are AntiBurn => destroy particle
+        if neighbors_burn <= 0 {
+            return ParticleChange::Changed(None);
         }
 
         ParticleChange::Changed(Some(Box::new(new_spark)))
