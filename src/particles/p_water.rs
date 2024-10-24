@@ -1,6 +1,6 @@
 use std::collections::LinkedList;
 
-use rand::random;
+use rand::{random, thread_rng};
 
 use crate::particles::constants::*;
 use crate::particles::{get_near_color, Particle};
@@ -15,6 +15,7 @@ const DENSITY: u8 = 128;
 pub struct Water {
     velocity: f32,
     color: u32,
+    x_dir: i32,
 }
 
 impl Water {
@@ -22,6 +23,7 @@ impl Water {
         Box::new(Water {
             velocity: DEFAULT_VELOCITY,
             color: get_near_color(COLOR),
+            x_dir: Self::random_x_dir(),
         })
     }
 
@@ -29,7 +31,16 @@ impl Water {
         Box::new(Water {
             velocity: DEFAULT_VELOCITY,
             color: get_near_color(color),
+            x_dir: Self::random_x_dir(),
         })
+    }
+
+    fn random_x_dir() -> i32 {
+        if random() {
+            -1
+        } else {
+            1
+        }
     }
 }
 
@@ -55,17 +66,10 @@ impl Particle for Water {
         let vel = self.velocity as i32;
 
         lst.push_back(Offset::new(0, 1) * vel);
-        if random() {
-            lst.push_back(Offset::new(1, 1) * vel);
-            lst.push_back(Offset::new(-1, 1) * vel);
-            lst.push_back(Offset::new(1, 0) * vel);
-            lst.push_back(Offset::new(-1, 0) * vel);
-        } else {
-            lst.push_back(Offset::new(-1, 1) * vel);
-            lst.push_back(Offset::new(1, 1) * vel);
-            lst.push_back(Offset::new(-1, 0) * vel);
-            lst.push_back(Offset::new(1, 0) * vel);
-        }
+        lst.push_back(Offset::new(self.x_dir, 1) * vel);
+        lst.push_back(Offset::new(-self.x_dir, 1) * vel);
+        lst.push_back(Offset::new(self.x_dir, 0) * vel);
+        lst.push_back(Offset::new(-self.x_dir, 0) * vel);
 
         lst
     }
@@ -106,7 +110,26 @@ impl Particle for Water {
         if count > 0 {
             ParticleChange::Changed(Some(Vapor::new()))
         } else {
-            // None of the above met => no change
+            // Check left and right for direction change
+            // Left
+            if self.x_dir == -1 {
+                if let Some(p) = &neigborhood[1][0] {
+                    if p.get_density() >= self.get_density() {
+                        let mut new_water = self.clone();
+                        new_water.x_dir = 1;
+                        return ParticleChange::Changed(Some(Box::new(new_water)));
+                    }
+                }
+            } else if self.x_dir == 1 {
+                if let Some(p) = &neigborhood[1][2] {
+                    if p.get_density() >= self.get_density() {
+                        let mut new_water = self.clone();
+                        new_water.x_dir = -1;
+                        return ParticleChange::Changed(Some(Box::new(new_water)));
+                    }
+                }
+            }
+
             ParticleChange::None
         }
     }
