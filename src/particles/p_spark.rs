@@ -46,7 +46,7 @@ impl Particle for Spark {
         MAX_DENSITY
     }
 
-    fn get_max_offsets(&self) -> LinkedList<Offset> {
+    fn _get_offsets(&self) -> LinkedList<Offset> {
         let mut indexes: Vec<usize> = (0..self.offsets.len()).collect();
         indexes.shuffle(&mut thread_rng());
 

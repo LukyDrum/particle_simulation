@@ -33,7 +33,7 @@ impl Particle for Rock {
         DENSITY
     }
 
-    fn get_max_offsets(&self) -> LinkedList<Offset> {
+    fn _get_offsets(&self) -> LinkedList<Offset> {
         LinkedList::new()
     }
 

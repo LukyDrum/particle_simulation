@@ -42,7 +42,7 @@ impl Particle for Vapor {
         DENSITY
     }
 
-    fn get_max_offsets(&self) -> LinkedList<Offset> {
+    fn _get_offsets(&self) -> LinkedList<Offset> {
         let mut lst = LinkedList::new();
 
         lst.push_back(Offset::new(0, -1));

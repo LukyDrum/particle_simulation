@@ -48,7 +48,7 @@ impl Particle for Mud {
         self.velocity
     }
 
-    fn get_max_offsets(&self) -> LinkedList<Offset> {
+    fn _get_offsets(&self) -> LinkedList<Offset> {
         let mut lst = LinkedList::new();
         let vel = self.velocity as i32;
 
