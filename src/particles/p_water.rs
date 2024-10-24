@@ -56,9 +56,13 @@ impl Particle for Water {
 
         lst.push_back(Offset::new(0, 1) * vel);
         if random() {
+            lst.push_back(Offset::new(1, 1) * vel);
+            lst.push_back(Offset::new(-1, 1) * vel);
             lst.push_back(Offset::new(1, 0) * vel);
             lst.push_back(Offset::new(-1, 0) * vel);
         } else {
+            lst.push_back(Offset::new(-1, 1) * vel);
+            lst.push_back(Offset::new(1, 1) * vel);
             lst.push_back(Offset::new(-1, 0) * vel);
             lst.push_back(Offset::new(1, 0) * vel);
         }
