@@ -52,6 +52,10 @@ impl Particle for Sand {
         self.velocity
     }
 
+    fn get_movement(&self) -> Offset {
+        self.movement * self.velocity as i32
+    }
+
     fn get_max_offsets(&self) -> LinkedList<Offset> {
         let mut lst = LinkedList::new();
         lst.push_back(self.movement * (self.velocity as i32));

@@ -73,6 +73,10 @@ pub trait Particle: Send + Sync + DynClone {
         max_offsets
     }
 
+    fn get_movement(&self) -> Offset {
+        Offset::zero()
+    }
+
     /// Returns true if the particle is moveable (can move).
     fn is_moveable(&self) -> bool;
 

@@ -32,7 +32,6 @@ impl SimInfo {
 enum SimMove {
     Move(usize),   // FROM
     Switch(usize), // FROM
-    Stop,          // Happens when particle with velocity stops in place
 }
 
 pub struct Simulation {
@@ -233,42 +232,30 @@ impl Simulation {
 
                 // Particles current offset
                 let p_offset = self.index_to_offset(i);
-                let mut did_move = false;
                 // Check the maximum offsets the particle would like to move to
-                for max_offset in p.get_max_offsets() {
-                    // Find the maximum offset to which the particle CAN move
-                    let new_offset = self.find_max_offset(p_offset, max_offset, p);
+                let max_offset = p.get_movement();
+                // Find the maximum offset to which the particle CAN move
+                let new_offset = self.find_max_offset(p_offset, max_offset, p);
 
-                    // Check for out of bounds
-                    if !self.is_within(&new_offset) {
-                        continue;
-                    }
-
-                    // Convert to index
-                    let new_index = self.offset_to_index(&new_offset);
-
-                    // Try for SimMove::MOVE
-                    if self.particles[new_index].is_none() {
-                        // Add the value to moves list
-                        moves_list.push_back((new_index, SimMove::Move(i)));
-                        did_move = true;
-                        break;
-                    }
-
-                    // Try for SimMove::SWITCH
-                    if let Some(other_p) = &self.particles[new_index] {
-                        if p.can_switch_with(other_p) {
-                            // Add the value to moves list
-                            moves_list.push_back((new_index, SimMove::Switch(i)));
-                            did_move = true;
-                            break;
-                        }
-                    }
+                // Check for out of bounds
+                if !self.is_within(&new_offset) {
+                    continue;
                 }
 
-                // If the particle did not move (that means there was no chance for it to move) we should stop it's velocity (if it is greater than default velocity)
-                if !did_move && p.get_velocity() > DEFAULT_VELOCITY {
-                    moves_list.push_back((i, SimMove::Stop));
+                // Convert to index
+                let new_index = self.offset_to_index(&new_offset);
+
+                // Try for SimMove::MOVE
+                if self.particles[new_index].is_none() {
+                    // Add the value to moves list
+                    moves_list.push_back((new_index, SimMove::Move(i)));
+                }
+                // Try for SimMove::SWITCH
+                else if let Some(other_p) = &self.particles[new_index] {
+                    if p.can_switch_with(other_p) {
+                        // Add the value to moves list
+                        moves_list.push_back((new_index, SimMove::Switch(i)));
+                    }
                 }
             }
         }
@@ -334,13 +321,6 @@ impl Simulation {
                         self.particles[to] = Some(p);
                     } else {
                         self.particles[to] = None;
-                    }
-                }
-                // Partcile does no move but still has velocity, then we should reset it's velocity
-                SimMove::Stop => {
-                    let mut opt = &mut self.particles[to];
-                    if let Some(p) = &mut opt {
-                        p.reset_velocity();
                     }
                 }
             }

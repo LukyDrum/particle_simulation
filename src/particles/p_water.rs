@@ -84,6 +84,10 @@ impl Particle for Water {
         self.velocity = (self.velocity + acc).clamp(DEFAULT_VELOCITY, MAX_VELOCITY);
     }
 
+    fn get_movement(&self) -> Offset {
+        self.movement * self.velocity as i32
+    }
+
     fn update(&self, neigborhood: Neighborhood) -> ParticleChange {
         let mut new_water = self.clone();
 
