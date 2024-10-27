@@ -1,11 +1,12 @@
 // MODS
+#[macro_use]
+mod utility;
 mod frame;
 mod offset;
 mod particles;
 mod simulation;
 mod sprite;
 mod test;
-mod utility;
 
 // IMPORTS
 use std::time::SystemTime;

@@ -39,3 +39,19 @@ where
 {
     thread_rng().gen_range((middle - radius)..=(middle + radius))
 }
+
+macro_rules! for_else {
+    (for $var:ident in $collection:expr => $for_block:block else $else_block:block) => {
+        let mut flag = false;
+        for $var in $collection {
+            flag = false;
+
+            $for_block;
+
+            flag = true;
+        }
+        if !flag {
+            $else_block
+        }
+    };
+}
