@@ -56,6 +56,7 @@ where
 /// ```
 macro_rules! for_else {
     (for $var:ident in $collection:expr => $for_block:block else $else_block:block) => {
+        #[allow(unused)]
         let mut flag = false;
         for $var in $collection {
             flag = false;
