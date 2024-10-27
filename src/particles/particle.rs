@@ -5,9 +5,7 @@ use rand::{thread_rng, Rng};
 
 use crate::offset::Offset;
 
-use super::{constants::DEFAULT_VELOCITY, Burnability};
-
-pub type Neighborhood<'a> = Vec<Vec<&'a Option<Box<dyn Particle>>>>;
+use super::{constants::DEFAULT_VELOCITY, Burnability, Neighborhood};
 
 /// Similiar to Option.
 /// Contains information if the particle has changed or not.

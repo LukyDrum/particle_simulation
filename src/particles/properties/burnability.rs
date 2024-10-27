@@ -58,7 +58,7 @@ impl Burnability {
         // If there is more AntiBurn => particle will cease to be
         let mut burning_count = 0;
         let mut antiburn_count = 0;
-        for opt in neigborhood.iter().flatten() {
+        for opt in neigborhood.iter() {
             if let Some(neigh) = opt {
                 match neigh.get_burnability() {
                     Burnability::IsBurning(_) => burning_count += 1,

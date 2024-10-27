@@ -457,7 +457,7 @@ impl Simulation {
     }
 
     fn get_neighborhood(&self, offset: Offset) -> Neighborhood {
-        let mut neigh: Neighborhood = vec![vec![&None; 3]; 3];
+        let mut neigh: Neighborhood = Neighborhood(vec![vec![&None; 3]; 3]);
 
         for row_off in -1..=1 {
             for col_off in -1..=1 {
@@ -466,9 +466,9 @@ impl Simulation {
                 let col = (col_off + 1) as usize;
 
                 if self.is_within(&new_offset) {
-                    neigh[row][col] = self.get_particle(&new_offset);
+                    neigh.0[row][col] = self.get_particle(&new_offset);
                 } else {
-                    neigh[row][col] = &None;
+                    neigh.0[row][col] = &None;
                 }
             }
         }

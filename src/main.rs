@@ -13,7 +13,8 @@ use std::time::SystemTime;
 use crate::frame::Frame;
 use minifb::{Key, MouseButton, Window, WindowOptions};
 use offset::Offset;
-use particles::{Fly, Mud, Oil, Particle, Rock, Sand, Smoke, Spark, Static, Vapor, Water, Wood};
+// use particles::{Fly, Mud, Oil, Particle, Rock, Sand, Smoke, Spark, Static, Vapor, Water, Wood};
+use particles::{Particle, Rock, Sand, Water};
 use simulation::Simulation;
 use sprite::Sprite;
 use utility::{draw_ui_to_frame, get_offsets_for_square};
@@ -44,15 +45,15 @@ fn main() {
 
     let unique_particles = vec![
         Sand::new,
-        Mud::new,
+        // Mud::new,
         Water::new,
         Rock::new,
-        Oil::new,
-        Fly::new,
-        Spark::new,
-        Wood::new,
-        Smoke::new,
-        Vapor::new,
+        // Oil::new,
+        // Fly::new,
+        // Spark::new,
+        // Wood::new,
+        // Smoke::new,
+        // Vapor::new,
     ];
     let indicator_particles: Vec<Box<dyn Particle>> =
         unique_particles.iter().map(|p| p()).collect();
@@ -67,21 +68,21 @@ fn main() {
 
     simulation.bg_color = 0xFFD1FFFC;
     // Load and insert sprite
-    let fit_sprite = Sprite::load("assets/fit_pixel_blue.png");
-    if let Ok(sprite) = fit_sprite {
-        simulation.insert_sprite(sprite, &Offset::new(80, 50), |color| match color {
-            0xFFFFFFFF => Static::new(color),
-            _ => Water::with_color(color),
-        });
-    }
+    // let fit_sprite = Sprite::load("assets/fit_pixel_blue.png");
+    // if let Ok(sprite) = fit_sprite {
+    //     simulation.insert_sprite(sprite, &Offset::new(80, 50), |color| match color {
+    //         0xFFFFFFFF => Static::new(color),
+    //         _ => Water::with_color(color),
+    //     });
+    // }
 
-    let fit_sprite = Sprite::load("assets/fit_pixel.png");
-    if let Ok(sprite) = fit_sprite {
-        simulation.insert_sprite(sprite, &Offset::new(20, 50), |color| match color {
-            0xFF000000 => Static::new(color),
-            _ => Sand::with_color(color),
-        });
-    }
+    // let fit_sprite = Sprite::load("assets/fit_pixel.png");
+    // if let Ok(sprite) = fit_sprite {
+    //     simulation.insert_sprite(sprite, &Offset::new(20, 50), |color| match color {
+    //         0xFF000000 => Static::new(color),
+    //         _ => Sand::with_color(color),
+    //     });
+    // }
 
     // Print controls to terminal
     println!();

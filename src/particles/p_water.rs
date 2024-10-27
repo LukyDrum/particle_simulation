@@ -6,7 +6,8 @@ use crate::particles::constants::*;
 use crate::particles::{get_near_color, Particle};
 use crate::Offset;
 
-use super::{Burnability, Neighborhood, ParticleChange, Vapor};
+// use super::{Burnability, Neighborhood, ParticleChange, Vapor};
+use super::{Burnability, Neighborhood, ParticleChange, Sand};
 
 const COLOR: u32 = 0xFF326ECF;
 const DENSITY: u8 = 128;
@@ -97,7 +98,7 @@ impl Particle for Water {
     fn update(&self, neigborhood: Neighborhood) -> ParticleChange {
         // Check number of neighbors that are IsBurning and AntiBurn
         let mut count = 0;
-        for opt in neigborhood.iter().flatten() {
+        for opt in neigborhood.iter() {
             if let Some(neigh) = opt {
                 match neigh.get_burnability() {
                     Burnability::IsBurning(_) => count += 1,
@@ -108,12 +109,13 @@ impl Particle for Water {
         }
 
         if count > 0 {
-            ParticleChange::Changed(Some(Vapor::new()))
+            // ParticleChange::Changed(Some(Vapor::new()))
+            ParticleChange::None
         } else {
             // Check left and right for direction change
             // Left
             if self.x_dir == -1 {
-                if let Some(p) = &neigborhood[1][0] {
+                if let Some(p) = &neigborhood.left() {
                     if p.get_density() >= self.get_density() {
                         let mut new_water = self.clone();
                         new_water.x_dir = 1;
@@ -121,7 +123,7 @@ impl Particle for Water {
                     }
                 }
             } else if self.x_dir == 1 {
-                if let Some(p) = &neigborhood[1][2] {
+                if let Some(p) = &neigborhood.right() {
                     if p.get_density() >= self.get_density() {
                         let mut new_water = self.clone();
                         new_water.x_dir = -1;
