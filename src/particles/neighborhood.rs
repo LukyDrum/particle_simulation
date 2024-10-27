@@ -1,3 +1,5 @@
+use crate::offset::Offset;
+
 use super::Particle;
 
 pub struct Neighborhood<'a>(pub Vec<Vec<&'a Option<Box<dyn Particle>>>>);
@@ -33,6 +35,11 @@ impl<'a> Neighborhood<'a> {
 
     pub fn down_right(&self) -> &Option<Box<dyn Particle>> {
         self.0[2][2]
+    }
+
+    /// Returns the Option on the `offset` relative to the center of neighborhood.
+    pub fn on_relative(&self, offset: &Offset) -> &Option<Box<dyn Particle>> {
+        self.0[(1 + offset.y) as usize][(1 + offset.x) as usize]
     }
 
     pub fn iter(
