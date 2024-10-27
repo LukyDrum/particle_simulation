@@ -257,7 +257,7 @@ impl Simulation {
 
                     // Try for SimMove::SWITCH
                     if let Some(other_p) = &self.particles[new_index] {
-                        if Self::can_switch(p, other_p) {
+                        if p.can_switch_with(other_p) {
                             // Add the value to moves list
                             moves_list.push_back((new_index, SimMove::Switch(i)));
                             did_move = true;
@@ -414,7 +414,7 @@ impl Simulation {
 
             if let Some(other_p) = opt {
                 // If other_p does not have lower density, then we won't be able to switch
-                if !(Self::can_switch(particle, other_p)) {
+                if !(particle.can_switch_with(other_p)) {
                     return offsets_between[i - 1];
                 }
             }
@@ -447,13 +447,6 @@ impl Simulation {
             "Move made last frame: {}",
             self.sim_info.moves_made_last_frame
         );
-    }
-
-    /// Particles can switch if other particle has lower density
-    /// OR the particle has high enough speed and the other particle is not completely solid.
-    fn can_switch(p: &Box<dyn Particle>, other_p: &Box<dyn Particle>) -> bool {
-        other_p.get_density() < p.get_density()
-            || (p.get_velocity() > DEFAULT_VELOCITY && !other_p.is_solid())
     }
 
     fn get_neighborhood(&self, offset: Offset) -> Neighborhood {

@@ -81,16 +81,25 @@ impl Particle for Sand {
     fn update(&self, neigborhood: Neighborhood) -> ParticleChange {
         let mut new_sand = self.clone();
 
-        if neigborhood.down().is_none() {
-            new_sand.movement = Offset::new(0, 1);
-        } else if neigborhood.down_left().is_none() {
-            new_sand.movement = Offset::new(-1, 1);
-        } else if neigborhood.down_right().is_none() {
-            new_sand.movement = Offset::new(1, 1);
-        } else {
-            new_sand.movement = Offset::zero();
-            new_sand.velocity = DEFAULT_VELOCITY;
-        }
+        for_else!(
+            for off in [Offset::new(0, 1), Offset::new(-1, 1), Offset::new(1, 1)] => {
+                match neigborhood.on_relative(&off) {
+                    None => {
+                        new_sand.movement = off;
+                        break;
+                    }
+                    Some(other) => {
+                        if self.can_switch_with(other) {
+                            new_sand.movement = off;
+                            break;
+                        }
+                    }
+                }
+            } else {
+                new_sand.movement = Offset::zero();
+                new_sand.velocity = DEFAULT_VELOCITY;
+            }
+        );
 
         ParticleChange::Changed(Some(Box::new(new_sand)))
     }

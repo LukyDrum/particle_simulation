@@ -79,6 +79,13 @@ pub trait Particle: Send + Sync + DynClone {
     /// Returns true if the particle is completly solid (Example: rock).
     fn is_solid(&self) -> bool;
 
+    /// Checks if `self` can switch with `other`.
+    /// This is the default implementation, can be overriden for custom behavior.
+    fn can_switch_with(&self, other: &Box<dyn Particle>) -> bool {
+        self.get_density() > other.get_density()
+            || (self.get_velocity() > DEFAULT_VELOCITY && !other.is_solid())
+    }
+
     // PROPERTIES
 
     /// Returns the Burnability of this particle. By default is Burnability::None.
