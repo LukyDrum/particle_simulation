@@ -134,7 +134,7 @@ mod utility_test {
             }
         );
 
-        assert!(early_flag);
+        assert!(!early_flag);
     }
 
     #[test]
@@ -152,6 +152,6 @@ mod utility_test {
             }
         );
 
-        assert!(!early_flag);
+        assert!(early_flag);
     }
 }

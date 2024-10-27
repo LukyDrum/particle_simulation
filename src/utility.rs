@@ -40,6 +40,20 @@ where
     thread_rng().gen_range((middle - radius)..=(middle + radius))
 }
 
+/// Takes a for loop with an else branch. The else branch is executed if the for loop finishes all of its loops.
+///
+/// # Example:
+/// ```rust
+///     for_else!(
+///         for x in 1..10 => {
+///             if x == 5 {
+///                 break;
+///             }
+///         } else {
+///             unreachable!();
+///         }
+///     )
+/// ```
 macro_rules! for_else {
     (for $var:ident in $collection:expr => $for_block:block else $else_block:block) => {
         let mut flag = false;
@@ -50,7 +64,7 @@ macro_rules! for_else {
 
             flag = true;
         }
-        if !flag {
+        if flag {
             $else_block
         }
     };
