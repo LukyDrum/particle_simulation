@@ -33,7 +33,7 @@ fn main() {
         Mud::new,
         Water::new,
         Rock::new,
-        // Oil::new,
+        Oil::new,
         // Fly::new,
         // Spark::new,
         // Wood::new,
