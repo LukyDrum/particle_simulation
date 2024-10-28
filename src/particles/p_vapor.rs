@@ -1,8 +1,4 @@
-use std::collections::LinkedList;
-
-use rand::random;
-
-use crate::particles::{get_near_color, Particle};
+use crate::particles::{get_near_color, NeighborCell, Particle};
 use crate::utility::get_value_around;
 use crate::Offset;
 
@@ -18,6 +14,7 @@ const LIFETIME_OFF: u32 = 300;
 pub struct Vapor {
     color: u32,
     lifetime: u32,
+    movement: Offset,
 }
 
 impl Vapor {
@@ -25,6 +22,7 @@ impl Vapor {
         Box::new(Vapor {
             color: get_near_color(COLOR),
             lifetime: get_value_around(DEFAULT_LIFETIME, LIFETIME_OFF),
+            movement: Offset::zero(),
         })
     }
 }
@@ -42,22 +40,6 @@ impl Particle for Vapor {
         DENSITY
     }
 
-    fn _get_offsets(&self) -> LinkedList<Offset> {
-        let mut lst = LinkedList::new();
-
-        lst.push_back(Offset::new(0, -1));
-
-        if random() {
-            lst.push_back(Offset::new(1, 0));
-            lst.push_back(Offset::new(-1, 0));
-        } else {
-            lst.push_back(Offset::new(-1, 0));
-            lst.push_back(Offset::new(1, 0));
-        }
-
-        lst
-    }
-
     fn is_moveable(&self) -> bool {
         true
     }
@@ -66,7 +48,11 @@ impl Particle for Vapor {
         false
     }
 
-    fn update(&self, _neigborhood: super::Neighborhood) -> ParticleChange {
+    fn get_movement(&self) -> Offset {
+        self.movement
+    }
+
+    fn update(&self, neigborhood: super::Neighborhood) -> ParticleChange {
         // Lifetime reached 0 => vapor condenses to water
         if self.lifetime == 0 {
             return ParticleChange::Changed(Some(Water::new()));
@@ -75,6 +61,29 @@ impl Particle for Vapor {
         // Clone vapor and decrease it's lifetime by 1
         let mut new_vapor = self.clone();
         new_vapor.lifetime -= 1;
+
+        let x_dir = if fastrand::bool() { 1 } else { -1 };
+        // Find new movement
+        for_else!(
+            for off in [Offset::new(0, -1), Offset::new(x_dir, 0), Offset::new(-x_dir, 0)] => {
+                if let NeighborCell::Inside(opt) = neigborhood.on_relative(&off) {
+                    match opt {
+                        None => {
+                            new_vapor.movement = off;
+                            break;
+                        }
+                        Some(other) => {
+                            if self.can_switch_with(other) {
+                                new_vapor.movement = off;
+                                break;
+                            }
+                        }
+                    }
+                }
+            } else {
+                new_vapor.movement = Offset::zero();
+            }
+        );
 
         ParticleChange::Changed(Some(Box::new(new_vapor)))
     }

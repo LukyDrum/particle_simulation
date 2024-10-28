@@ -38,7 +38,7 @@ fn main() {
         // Spark::new,
         // Wood::new,
         Smoke::new,
-        // Vapor::new,
+        Vapor::new,
     ];
     let indicator_particles: Vec<Box<dyn Particle>> =
         unique_particles.iter().map(|p| p()).collect();
