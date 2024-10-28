@@ -1,6 +1,6 @@
 use std::collections::LinkedList;
 
-use rand::random;
+use fastrand;
 
 use crate::particles::constants::*;
 use crate::particles::{get_near_color, Particle};
@@ -85,8 +85,10 @@ impl Particle for Sand {
     fn update(&self, neigborhood: Neighborhood) -> ParticleChange {
         let mut new_sand = self.clone();
 
+        let rand_x = if fastrand::bool() { 1 } else { -1 };
+
         for_else!(
-            for off in [Offset::new(0, 1), Offset::new(-1, 1), Offset::new(1, 1)] => {
+            for off in [Offset::new(0, 1), Offset::new(-rand_x, 1), Offset::new(rand_x, 1)] => {
                 match neigborhood.on_relative(&off) {
                     None => {
                         new_sand.movement = off;
