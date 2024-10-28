@@ -17,6 +17,7 @@ pub struct Water {
     velocity: f32,
     color: u32,
     movement: Offset,
+    x_dir: i32, // Used to keep water keeping in one side direction until it can no longer - helps with spreading
 }
 
 impl Water {
@@ -25,14 +26,7 @@ impl Water {
             velocity: DEFAULT_VELOCITY,
             color: get_near_color(COLOR),
             movement: Offset::new(0, 1),
-        })
-    }
-
-    pub fn with_color(color: u32) -> Box<dyn Particle> {
-        Box::new(Water {
-            velocity: DEFAULT_VELOCITY,
-            color: get_near_color(color),
-            movement: Offset::new(0, 1),
+            x_dir: if fastrand::bool() { 1 } else { -1 }, // Start with a random x_dir
         })
     }
 }
@@ -91,10 +85,15 @@ impl Particle for Water {
     fn update(&self, neigborhood: Neighborhood) -> ParticleChange {
         let mut new_water = self.clone();
 
-        let rand_x = if fastrand::bool() { 1 } else { -1 };
+        // Check left and right for new x_dir
+        if neigborhood.left().is_some() {
+            new_water.x_dir = 1;
+        } else if neigborhood.right().is_some() {
+            new_water.x_dir = -1;
+        }
 
         for_else!(
-            for off in [Offset::new(0, 1), Offset::new(-rand_x, 1), Offset::new(rand_x, 1), Offset::new(-rand_x, 0), Offset::new(rand_x, 0)] => {
+            for off in [Offset::new(0, 1), Offset::new(new_water.x_dir, 1), Offset::new(new_water.x_dir, 0)] => {
                 match neigborhood.on_relative(&off) {
                     None => {
                         new_water.movement = off;
