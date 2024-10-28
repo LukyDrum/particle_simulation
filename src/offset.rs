@@ -67,6 +67,11 @@ impl Offset {
     pub fn is_right(&self) -> bool {
         self.x > 0
     }
+
+    /// Returns true if both x and y are 0
+    pub fn is_zero(&self) -> bool {
+        self.x == 0 && self.y == 0
+    }
 }
 
 impl ops::Add for Offset {

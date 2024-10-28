@@ -1,42 +1,50 @@
-use std::collections::LinkedList;
-
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
-use crate::particles::constants::*;
+use crate::particles::{constants::*, NeighborCell};
 use crate::particles::{get_near_color, Particle};
 use crate::utility::get_value_around;
 use crate::Offset;
 
 use super::properties::PropertyCheckResult;
-use super::{Burnability, ParticleChange};
+use super::{Burnability, Neighborhood, ParticleChange};
 
 const COLOR: u32 = 0xFF152E02;
 /// Default lifetime in number of updates
-const DEFAULT_LIFETIME: u32 = 500;
-const LIFETIME_OFF: u32 = 100;
-const BURNABILITY_TIME: u8 = 10;
+const DEFAULT_LIFETIME: u32 = 1000;
+const LIFETIME_OFF: u32 = 400;
+const BURNABILITY_TIME: u8 = 25;
+const FOCUS_TIME: u32 = 7; // How long can a fly focus on a single direction of movement
+const FOCUS_TIME_OFFSET: u32 = 7;
+const OFFSETS: [Offset; 9] = [
+    Offset { x: 0, y: 0 },
+    Offset { x: 1, y: 0 },
+    Offset { x: -1, y: 0 },
+    Offset { x: 0, y: 1 },
+    Offset { x: 0, y: -1 },
+    Offset { x: 1, y: 1 },
+    Offset { x: -1, y: 1 },
+    Offset { x: 1, y: -1 },
+    Offset { x: -1, y: -1 },
+];
 
 #[derive(Clone)]
 pub struct Fly {
     color: u32,
-    offsets: [Offset; 4],
     lifetime: u32,
     burnability: Burnability,
+    movement: Offset,
+    focus: u32,
 }
 
 impl Fly {
     pub fn new() -> Box<dyn Particle> {
         Box::new(Fly {
             color: get_near_color(COLOR),
-            offsets: [
-                Offset::new(1, 0),
-                Offset::new(-1, 0),
-                Offset::new(0, 1),
-                Offset::new(0, -1),
-            ],
             lifetime: get_value_around(DEFAULT_LIFETIME, LIFETIME_OFF),
             burnability: Burnability::CanBurn,
+            movement: Offset::zero(),
+            focus: 0,
         })
     }
 }
@@ -58,18 +66,6 @@ impl Particle for Fly {
         DEFAULT_VELOCITY
     }
 
-    fn _get_offsets(&self) -> LinkedList<Offset> {
-        let mut indexes: Vec<usize> = (0..self.offsets.len()).collect();
-        indexes.shuffle(&mut thread_rng());
-
-        let mut lst = LinkedList::new();
-        for i in indexes {
-            lst.push_back(self.offsets[i]);
-        }
-
-        lst
-    }
-
     fn is_moveable(&self) -> bool {
         true
     }
@@ -86,7 +82,16 @@ impl Particle for Fly {
         self.burnability = new_burnability;
     }
 
-    fn update(&self, neigborhood: super::Neighborhood) -> ParticleChange {
+    fn can_switch_with(&self, other: &Box<dyn Particle>) -> bool {
+        // Can switch but only if the other particle is gas (has the density of gas)
+        other.get_density() < MAX_GAS_DENSITY
+    }
+
+    fn get_movement(&self) -> Offset {
+        self.movement
+    }
+
+    fn update(&self, neigborhood: Neighborhood) -> ParticleChange {
         // Lifetime reached 0 => fly is dead
         if self.lifetime == 0 {
             return ParticleChange::Changed(None);
@@ -96,8 +101,41 @@ impl Particle for Fly {
         let mut new_fly = self.clone();
         new_fly.lifetime -= 1;
 
-        let res = Burnability::check(&mut new_fly, &neigborhood, BURNABILITY_TIME, true);
+        // Find new movement
+        let on_next_cell = neigborhood.on_relative(&self.movement);
+        // !is_none = !(inside AND none) = outisde OR some
+        if new_fly.focus == 0 || !on_next_cell.is_none() {
+            let mut indexes: Vec<usize> = (0..OFFSETS.len()).collect();
+            indexes.shuffle(&mut thread_rng());
+            // Loop over offsets indexed by shuffled
+            for_else!(
+                for index in indexes => {
+                    let off = OFFSETS[index];
+                    if let NeighborCell::Inside(opt) = neigborhood.on_relative(&off) {
+                        match opt {
+                            None => {
+                                new_fly.movement = off;
+                                new_fly.focus = get_value_around(FOCUS_TIME, FOCUS_TIME_OFFSET);
+                                break;
+                            }
+                            Some(other) => {
+                                if new_fly.can_switch_with(other) {
+                                    new_fly.movement = off;
+                                    new_fly.focus = get_value_around(FOCUS_TIME, FOCUS_TIME_OFFSET);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    new_fly.movement = Offset::zero();
+                }
+            );
+        } else {
+            new_fly.focus -= 1;
+        }
 
+        let res = Burnability::check(&mut new_fly, &neigborhood, BURNABILITY_TIME, true);
         match res {
             PropertyCheckResult::Updated => {
                 if let Burnability::IsBurning(_) = new_fly.get_burnability() {
@@ -107,7 +145,7 @@ impl Particle for Fly {
                 ParticleChange::Changed(Some(Box::new(new_fly)))
             }
             PropertyCheckResult::Destroyed => ParticleChange::Changed(None),
-            PropertyCheckResult::None => ParticleChange::None,
+            PropertyCheckResult::None => ParticleChange::Changed(Some(Box::new(new_fly))),
         }
     }
 }
