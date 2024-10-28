@@ -1,6 +1,6 @@
 use fastrand;
 
-use crate::particles::{constants::*, NeighborCell};
+use crate::particles::{constants::*, NeighborCell, Vapor};
 use crate::particles::{get_near_color, Particle};
 use crate::Offset;
 
@@ -116,8 +116,7 @@ impl Particle for Water {
         }
 
         if count > 0 {
-            // ParticleChange::Changed(Some(Vapor::new()))
-            ParticleChange::None
+            ParticleChange::Changed(Some(Vapor::new()))
         } else {
             ParticleChange::Changed(Some(Box::new(new_water)))
         }
