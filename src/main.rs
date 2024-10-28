@@ -3,7 +3,6 @@ use std::time::SystemTime;
 
 use minifb::{Key, MouseButton, Window, WindowOptions};
 use particle_simulation::{particles::*, utility::*, Frame, Offset, Simulation, Sprite};
-// use particles::{Fly, Mud, Oil, Particle, Rock, Sand, Smoke, Spark, Static, Vapor, Water, Wood};
 
 const WIDTH: usize = 200;
 const HEIGHT: usize = 200;
@@ -31,7 +30,7 @@ fn main() {
 
     let unique_particles = vec![
         Sand::new,
-        // Mud::new,
+        Mud::new,
         Water::new,
         Rock::new,
         // Oil::new,

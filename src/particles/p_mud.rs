@@ -1,8 +1,6 @@
-use std::collections::LinkedList;
-
 use rand::random;
 
-use crate::particles::constants::*;
+use crate::particles::{constants::*, NeighborCell};
 use crate::particles::{get_near_color, Particle};
 use crate::utility::get_value_around;
 use crate::Offset;
@@ -19,6 +17,7 @@ pub struct Mud {
     color: u32,
     /// Definies how much does the mud particle want to fall to the side. Actually falls when it reaches zero
     side_friction: u8,
+    movement: Offset,
 }
 
 impl Mud {
@@ -27,6 +26,7 @@ impl Mud {
             velocity: DEFAULT_VELOCITY,
             color: get_near_color(COLOR),
             side_friction: get_side_friction(),
+            movement: Offset::zero(),
         })
     }
 }
@@ -48,28 +48,6 @@ impl Particle for Mud {
         self.velocity
     }
 
-    fn _get_offsets(&self) -> LinkedList<Offset> {
-        let mut lst = LinkedList::new();
-        let vel = self.velocity as i32;
-
-        lst.push_back(Offset::new(0, 1) * vel);
-
-        // If side friction is not yet 0, then dont try to fall to side
-        if self.side_friction > 0 {
-            return lst;
-        }
-
-        if random() {
-            lst.push_back(Offset::new(1, 1) * vel);
-            lst.push_back(Offset::new(-1, 1) * vel);
-        } else {
-            lst.push_back(Offset::new(-1, 1) * vel);
-            lst.push_back(Offset::new(1, 1) * vel);
-        }
-
-        lst
-    }
-
     fn is_moveable(&self) -> bool {
         true
     }
@@ -78,30 +56,75 @@ impl Particle for Mud {
         true
     }
 
-    fn reset_velocity(&mut self) -> () {
-        self.velocity = DEFAULT_VELOCITY;
-    }
-
-    fn apply_acceleration(&mut self, acc: f32) -> () {
-        self.velocity = (self.velocity + acc).clamp(DEFAULT_VELOCITY, MAX_VELOCITY);
+    fn get_movement(&self) -> Offset {
+        self.movement * self.velocity as i32
     }
 
     fn update(&self, neigborhood: super::Neighborhood) -> ParticleChange {
-        // Check bellow and if there is some particle then either reset or decrease current side friction.
-        let opt_below = neigborhood[2][1];
-        match opt_below {
-            Some(_) => {
-                let mut new_mud = self.clone();
-                if new_mud.side_friction == 0 {
-                    new_mud.side_friction = get_side_friction();
-                } else {
-                    new_mud.side_friction -= 1;
-                }
+        let mut new_mud = self.clone();
 
-                ParticleChange::Changed(Some(Box::new(new_mud)))
+        // Empty cell bellow or full but can switch
+        match neigborhood.down() {
+            NeighborCell::Inside(None) => {
+                new_mud.movement = Offset::new(0, 1);
+                new_mud.velocity = MAX_VELOCITY.min(new_mud.velocity + GRAVITY);
+
+                return ParticleChange::Changed(Some(Box::new(new_mud)));
             }
-            None => ParticleChange::None,
+            NeighborCell::Inside(Some(other)) => {
+                if new_mud.can_switch_with(other) {
+                    new_mud.movement = Offset::new(0, 1);
+                    // Apply some slowdown as if by friction of switching
+                    new_mud.velocity = DEFAULT_VELOCITY.max(new_mud.velocity - SWITCH_SLOWDOWN);
+
+                    return ParticleChange::Changed(Some(Box::new(new_mud)));
+                }
+            }
+            _ => {}
         }
+
+        // Cant fall to side yet
+        if new_mud.side_friction > 0 {
+            new_mud.movement = Offset::zero();
+            new_mud.velocity = DEFAULT_VELOCITY;
+            new_mud.side_friction -= 1;
+            return ParticleChange::Changed(Some(Box::new(new_mud)));
+        }
+
+        // Find new movement to sides, because side friction is 0
+        let rand_x = if fastrand::bool() { 1 } else { -1 };
+        for_else!(
+            for off in [Offset::new(-rand_x, 1), Offset::new(rand_x, 1)] => {
+                if let NeighborCell::Inside(opt) = neigborhood.on_relative(&off) {
+                    match opt {
+                        None => {
+                            new_mud.movement = off;
+                            new_mud.velocity = MAX_VELOCITY.min(new_mud.velocity + GRAVITY);
+                            // Reset side friction
+                            new_mud.side_friction = get_side_friction();
+
+                            break;
+                        }
+                        Some(other) => {
+                            if self.can_switch_with(other) {
+                                new_mud.movement = off;
+                                // Apply some slowdown as if by friction of switching
+                                new_mud.velocity = DEFAULT_VELOCITY.max(new_mud.velocity - SWITCH_SLOWDOWN);
+                                // Reset side friction
+                                new_mud.side_friction = get_side_friction();
+
+                                break;
+                            }
+                        }
+                    }
+                }
+            } else {
+                new_mud.movement = Offset::zero();
+                new_mud.velocity = DEFAULT_VELOCITY;
+            }
+        );
+
+        ParticleChange::Changed(Some(Box::new(new_mud)))
     }
 }
 
