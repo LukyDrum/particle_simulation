@@ -1,5 +1,3 @@
-use rand::random;
-
 use crate::particles::{constants::*, NeighborCell};
 use crate::particles::{get_near_color, Particle};
 use crate::utility::get_value_around;

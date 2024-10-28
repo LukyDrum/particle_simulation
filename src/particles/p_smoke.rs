@@ -1,8 +1,3 @@
-use std::collections::LinkedList;
-
-use rand::random;
-
-use super::constants::*;
 use crate::particles::{get_near_color, NeighborCell, Particle};
 use crate::utility::get_value_around;
 use crate::Offset;
