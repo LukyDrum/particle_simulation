@@ -37,7 +37,7 @@ fn main() {
         // Fly::new,
         // Spark::new,
         // Wood::new,
-        // Smoke::new,
+        Smoke::new,
         // Vapor::new,
     ];
     let indicator_particles: Vec<Box<dyn Particle>> =

@@ -59,9 +59,7 @@ pub trait Particle: Send + Sync + DynClone {
     fn get_density(&self) -> u8;
 
     /// Movement of particle is equal to the direction it wants to travel in times its velocity.
-    fn get_movement(&self) -> Offset {
-        Offset::zero()
-    }
+    fn get_movement(&self) -> Offset;
 
     /// Returns true if the particle is moveable (can move).
     fn is_moveable(&self) -> bool;

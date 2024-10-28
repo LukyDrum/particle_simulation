@@ -1,5 +1,6 @@
 use crate::particles::constants::*;
 use crate::particles::{get_near_color, Particle};
+use crate::Offset;
 
 const COLOR: u32 = 0xFF474747;
 const DENSITY: u8 = MAX_DENSITY;
@@ -36,5 +37,9 @@ impl Particle for Rock {
 
     fn is_solid(&self) -> bool {
         true
+    }
+
+    fn get_movement(&self) -> Offset {
+        Offset::zero()
     }
 }
