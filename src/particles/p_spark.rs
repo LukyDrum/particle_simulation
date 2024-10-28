@@ -13,11 +13,15 @@ const COLOR: u32 = FIRE_COLOR;
 /// Default lifetime in number of updates
 const DEFAULT_LIFETIME: u8 = 200;
 const LIFETIME_OFF: u8 = 50;
+const OFFSETS: [Offset; 3] = [
+    Offset { x: 1, y: 0 },
+    Offset { x: -1, y: 0 },
+    Offset { x: 0, y: 1 },
+];
 
 #[derive(Clone)]
 pub struct Spark {
     color: u32,
-    offsets: [Offset; 3],
     burnability: Burnability,
     movement: Offset,
 }
@@ -26,7 +30,6 @@ impl Spark {
     pub fn new() -> Box<dyn Particle> {
         Box::new(Spark {
             color: get_near_color(COLOR),
-            offsets: [Offset::new(1, 0), Offset::new(-1, 0), Offset::new(0, 1)],
             burnability: Burnability::IsBurning(get_value_around(DEFAULT_LIFETIME, LIFETIME_OFF)),
             movement: Offset::zero(),
         })
@@ -72,12 +75,12 @@ impl Particle for Spark {
 
         // Find new movement
         // Shuffle indexes
-        let mut indexes: Vec<usize> = (0..self.offsets.len()).collect();
+        let mut indexes: Vec<usize> = (0..OFFSETS.len()).collect();
         indexes.shuffle(&mut thread_rng());
         // Loop over offsets indexed by shuffled
         for_else!(
             for index in indexes => {
-                let off = self.offsets[index];
+                let off = OFFSETS[index];
                 if let NeighborCell::Inside(opt) = neigborhood.on_relative(&off) {
                     match opt {
                         None => {
