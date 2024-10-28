@@ -44,6 +44,8 @@ where
 ///
 /// # Example:
 /// ```rust
+///     use particle_simulation::for_else;
+///
 ///     for_else!(
 ///         for x in 1..10 => {
 ///             if x == 5 {
@@ -52,8 +54,9 @@ where
 ///         } else {
 ///             unreachable!();
 ///         }
-///     )
+///     );
 /// ```
+#[macro_export]
 macro_rules! for_else {
     (for $var:ident in $collection:expr => $for_block:block else $else_block:block) => {
         #[allow(unused)]
@@ -70,3 +73,4 @@ macro_rules! for_else {
         }
     };
 }
+pub use for_else;

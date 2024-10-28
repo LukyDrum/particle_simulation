@@ -1,24 +1,9 @@
-// MODS
-#[macro_use]
-mod utility;
-mod frame;
-mod offset;
-mod particles;
-mod simulation;
-mod sprite;
-mod test;
-
 // IMPORTS
 use std::time::SystemTime;
 
-use crate::frame::Frame;
 use minifb::{Key, MouseButton, Window, WindowOptions};
-use offset::Offset;
+use particle_simulation::{particles::*, utility::*, Frame, Offset, Simulation, Sprite};
 // use particles::{Fly, Mud, Oil, Particle, Rock, Sand, Smoke, Spark, Static, Vapor, Water, Wood};
-use particles::{Particle, Rock, Sand, Water};
-use simulation::Simulation;
-use sprite::Sprite;
-use utility::{draw_ui_to_frame, get_offsets_for_square};
 
 const WIDTH: usize = 200;
 const HEIGHT: usize = 200;
