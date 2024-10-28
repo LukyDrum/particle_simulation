@@ -36,7 +36,7 @@ fn main() {
         Oil::new,
         // Fly::new,
         // Spark::new,
-        // Wood::new,
+        Wood::new,
         Smoke::new,
         Vapor::new,
     ];
