@@ -234,28 +234,18 @@ impl Simulation {
                 let p_offset = self.index_to_offset(i);
                 // Check the maximum offsets the particle would like to move to
                 let max_offset = p.get_movement();
-                // Find the maximum offset to which the particle CAN move
-                let new_offset = self.find_max_offset(p_offset, max_offset, p);
-
-                // Check for out of bounds
-                if !self.is_within(&new_offset) {
+                // Continue to next particle if the offset is (0, 0)
+                if max_offset.is_zero() {
                     continue;
                 }
-
+                // Find the maximum offset to which the particle CAN move
+                // All necceseary check are done here
+                let new_offset = self.find_max_offset(p_offset, max_offset, p);
                 // Convert to index
                 let new_index = self.offset_to_index(&new_offset);
-
-                // Try for SimMove::MOVE
-                if self.particles[new_index].is_none() {
-                    // Add the value to moves list
-                    moves_list.push_back((new_index, SimMove::Move(i)));
-                }
-                // Try for SimMove::SWITCH
-                else if let Some(other_p) = &self.particles[new_index] {
-                    if p.can_switch_with(other_p) {
-                        // Add the value to moves list
-                        moves_list.push_back((new_index, SimMove::Switch(i)));
-                    }
+                match self.particles[new_index] {
+                    None => moves_list.push_back((new_index, SimMove::Move(i))),
+                    Some(_) => moves_list.push_back((new_index, SimMove::Switch(i))),
                 }
             }
         }
