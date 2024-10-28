@@ -1,8 +1,5 @@
-use std::collections::LinkedList;
-
 use crate::particles::constants::*;
 use crate::particles::{get_near_color, Particle};
-use crate::Offset;
 
 const COLOR: u32 = 0xFF474747;
 const DENSITY: u8 = MAX_DENSITY;
@@ -31,10 +28,6 @@ impl Particle for Rock {
 
     fn get_density(&self) -> u8 {
         DENSITY
-    }
-
-    fn _get_offsets(&self) -> LinkedList<Offset> {
-        LinkedList::new()
     }
 
     fn is_moveable(&self) -> bool {

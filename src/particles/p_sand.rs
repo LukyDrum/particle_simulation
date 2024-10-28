@@ -1,5 +1,3 @@
-use std::collections::LinkedList;
-
 use fastrand;
 
 use crate::particles::{constants::*, NeighborCell};
@@ -52,16 +50,6 @@ impl Particle for Sand {
         self.velocity
     }
 
-    fn get_movement(&self) -> Offset {
-        self.movement * self.velocity as i32
-    }
-
-    fn get_max_offsets(&self) -> LinkedList<Offset> {
-        let mut lst = LinkedList::new();
-        lst.push_back(self.movement * (self.velocity as i32));
-        lst
-    }
-
     fn is_moveable(&self) -> bool {
         true
     }
@@ -70,34 +58,33 @@ impl Particle for Sand {
         true
     }
 
-    fn reset_velocity(&mut self) -> () {
-        self.velocity = DEFAULT_VELOCITY;
-    }
-
-    fn apply_acceleration(&mut self, acc: f32) -> () {
-        self.velocity = (self.velocity + acc).clamp(DEFAULT_VELOCITY, MAX_VELOCITY);
-    }
-
-    fn _get_offsets(&self) -> LinkedList<Offset> {
-        LinkedList::new()
+    fn get_movement(&self) -> Offset {
+        self.movement * self.velocity as i32
     }
 
     fn update(&self, neigborhood: Neighborhood) -> ParticleChange {
         let mut new_sand = self.clone();
 
+        // Find new movement
         let rand_x = if fastrand::bool() { 1 } else { -1 };
-
         for_else!(
             for off in [Offset::new(0, 1), Offset::new(-rand_x, 1), Offset::new(rand_x, 1)] => {
                 if let NeighborCell::Inside(opt) = neigborhood.on_relative(&off) {
                     match opt {
                         None => {
                             new_sand.movement = off;
+                            // Check if the movement is down and apply gravity
+                            if off.is_down() {
+                                new_sand.velocity = MAX_VELOCITY.min(new_sand.velocity + GRAVITY);
+                            }
+
                             break;
                         }
                         Some(other) => {
                             if self.can_switch_with(other) {
                                 new_sand.movement = off;
+                                // Apply some slowdown as if by friction of switching
+                                new_sand.velocity = DEFAULT_VELOCITY.max(new_sand.velocity - SWITCH_SLOWDOWN);
                                 break;
                             }
                         }

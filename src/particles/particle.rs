@@ -1,5 +1,3 @@
-use std::collections::LinkedList;
-
 use dyn_clone::DynClone;
 use rand::{thread_rng, Rng};
 
@@ -60,19 +58,7 @@ pub trait Particle: Send + Sync + DynClone {
     /// The returned number is an 8bit unsigned integer (0-255).
     fn get_density(&self) -> u8;
 
-    fn _get_offsets(&self) -> LinkedList<Offset>;
-
-    /// Returns a list of the maximum offsets to which the particle would like to move to.
-    /// Example: A maximum offset of (5, 0) means that the particle would like to move 5 positions to right.
-    fn get_max_offsets(&self) -> LinkedList<Offset> {
-        let mut max_offsets = self._get_offsets();
-        if self.get_velocity_dir() != Offset::zero() {
-            max_offsets.push_front(self.get_velocity_dir() * self.get_velocity() as i32);
-        }
-
-        max_offsets
-    }
-
+    /// Movement of particle is equal to the direction it wants to travel in times its velocity.
     fn get_movement(&self) -> Offset {
         Offset::zero()
     }
@@ -111,16 +97,4 @@ pub trait Particle: Send + Sync + DynClone {
     fn get_velocity(&self) -> f32 {
         DEFAULT_VELOCITY
     }
-
-    /// Returns the direction of the particles velocity
-    /// Default: Offset::zero
-    fn get_velocity_dir(&self) -> Offset {
-        Offset::zero()
-    }
-
-    /// Resets the particle velocity to the DEFAULT_VELOCITY.
-    fn reset_velocity(&mut self) -> () {}
-
-    /// Applies the provided acceleration to the velocity of this particle.
-    fn apply_acceleration(&mut self, _acc: f32) -> () {}
 }

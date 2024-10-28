@@ -1,5 +1,3 @@
-use std::collections::LinkedList;
-
 use fastrand;
 
 use crate::particles::{constants::*, NeighborCell};
@@ -48,16 +46,6 @@ impl Particle for Water {
         self.velocity
     }
 
-    fn _get_offsets(&self) -> LinkedList<Offset> {
-        LinkedList::new()
-    }
-
-    fn get_max_offsets(&self) -> LinkedList<Offset> {
-        let mut lst = LinkedList::new();
-        lst.push_back(self.movement * (self.velocity as i32));
-        lst
-    }
-
     fn is_moveable(&self) -> bool {
         true
     }
@@ -68,14 +56,6 @@ impl Particle for Water {
 
     fn get_burnability(&self) -> Burnability {
         Burnability::AntiBurn
-    }
-
-    fn reset_velocity(&mut self) -> () {
-        self.velocity = DEFAULT_VELOCITY;
-    }
-
-    fn apply_acceleration(&mut self, acc: f32) -> () {
-        self.velocity = (self.velocity + acc).clamp(DEFAULT_VELOCITY, MAX_VELOCITY);
     }
 
     fn get_movement(&self) -> Offset {
@@ -94,17 +74,24 @@ impl Particle for Water {
             new_water.x_dir = -1;
         }
 
+        // Find new movement
         for_else!(
             for off in [Offset::new(0, 1), Offset::new(new_water.x_dir, 1), Offset::new(new_water.x_dir, 0)] => {
                 if let NeighborCell::Inside(opt) = neigborhood.on_relative(&off) {
                     match opt {
                         None => {
                             new_water.movement = off;
+                            // Check if the movement is down and apply gravity
+                            if off.is_down() {
+                                new_water.velocity = MAX_VELOCITY.min(new_water.velocity + GRAVITY);
+                            }
                             break;
                         }
                         Some(other) => {
                             if self.can_switch_with(other) {
                                 new_water.movement = off;
+                                // Apply some slowdown as if by friction of switching
+                                new_water.velocity = DEFAULT_VELOCITY.max(new_water.velocity - SWITCH_SLOWDOWN);
                                 break;
                             }
                         }

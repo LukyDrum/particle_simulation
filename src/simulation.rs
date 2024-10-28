@@ -10,7 +10,7 @@ use std::collections::LinkedList;
 use crate::{
     frame::Frame,
     offset::Offset,
-    particles::{constants::*, NeighborCell, Neighborhood, Particle, ParticleChange},
+    particles::{NeighborCell, Neighborhood, Particle, ParticleChange},
     sprite::Sprite,
 };
 
@@ -286,13 +286,7 @@ impl Simulation {
                     let opt = &self.particles[from];
 
                     if let Some(p) = opt {
-                        let mut p = *clone_box(&*p);
-                        // Check if the direction is aiming down
-                        let direction = self.index_to_offset(to) - self.index_to_offset(from);
-                        if direction.is_down() {
-                            p.apply_acceleration(GRAVITY);
-                        }
-
+                        let p = *clone_box(&*p);
                         // Move the particle
                         self.particles[to] = Some(p);
                         // Free the old sport
@@ -304,20 +298,15 @@ impl Simulation {
                     let opt_on_to = &self.particles[to];
                     let opt_on_with = self.particles[with].clone();
 
-                    // TODO: Maybe calculate this value based on density?
-                    let slow_down = 0.1;
-
                     if let Some(p) = opt_on_to {
-                        let mut p = *clone_box(&*p);
-                        p.apply_acceleration(-slow_down);
+                        let p = *clone_box(&*p);
                         self.particles[with] = Some(p);
                     } else {
                         self.particles[with] = None;
                     }
 
                     if let Some(p) = opt_on_with {
-                        let mut p = clone_box(&*p);
-                        p.apply_acceleration(-slow_down);
+                        let p = clone_box(&*p);
                         self.particles[to] = Some(p);
                     } else {
                         self.particles[to] = None;
