@@ -1,12 +1,11 @@
-use std::collections::LinkedList;
+use fastrand;
 
-use rand::{random, thread_rng};
-
-use crate::particles::constants::*;
+use crate::particles::{constants::*, NeighborCell, Vapor};
 use crate::particles::{get_near_color, Particle};
 use crate::Offset;
 
-use super::{Burnability, Neighborhood, ParticleChange, Vapor};
+// use super::{Burnability, Neighborhood, ParticleChange, Vapor};
+use super::{Burnability, Neighborhood, ParticleChange};
 
 const COLOR: u32 = 0xFF326ECF;
 const DENSITY: u8 = 128;
@@ -15,7 +14,8 @@ const DENSITY: u8 = 128;
 pub struct Water {
     velocity: f32,
     color: u32,
-    x_dir: i32,
+    movement: Offset,
+    x_dir: i32, // Used to keep water keeping in one side direction until it can no longer - helps with spreading
 }
 
 impl Water {
@@ -23,24 +23,9 @@ impl Water {
         Box::new(Water {
             velocity: DEFAULT_VELOCITY,
             color: get_near_color(COLOR),
-            x_dir: Self::random_x_dir(),
+            movement: Offset::new(0, 1),
+            x_dir: if fastrand::bool() { 1 } else { -1 }, // Start with a random x_dir
         })
-    }
-
-    pub fn with_color(color: u32) -> Box<dyn Particle> {
-        Box::new(Water {
-            velocity: DEFAULT_VELOCITY,
-            color: get_near_color(color),
-            x_dir: Self::random_x_dir(),
-        })
-    }
-
-    fn random_x_dir() -> i32 {
-        if random() {
-            -1
-        } else {
-            1
-        }
     }
 }
 
@@ -61,19 +46,6 @@ impl Particle for Water {
         self.velocity
     }
 
-    fn _get_offsets(&self) -> LinkedList<Offset> {
-        let mut lst = LinkedList::new();
-        let vel = self.velocity as i32;
-
-        lst.push_back(Offset::new(0, 1) * vel);
-        lst.push_back(Offset::new(self.x_dir, 1) * vel);
-        lst.push_back(Offset::new(-self.x_dir, 1) * vel);
-        lst.push_back(Offset::new(self.x_dir, 0) * vel);
-        lst.push_back(Offset::new(-self.x_dir, 0) * vel);
-
-        lst
-    }
-
     fn is_moveable(&self) -> bool {
         true
     }
@@ -86,19 +58,55 @@ impl Particle for Water {
         Burnability::AntiBurn
     }
 
-    fn reset_velocity(&mut self) -> () {
-        self.velocity = DEFAULT_VELOCITY;
-    }
-
-    fn apply_acceleration(&mut self, acc: f32) -> () {
-        self.velocity = (self.velocity + acc).clamp(DEFAULT_VELOCITY, MAX_VELOCITY);
+    fn get_movement(&self) -> Offset {
+        self.movement * self.velocity as i32
     }
 
     fn update(&self, neigborhood: Neighborhood) -> ParticleChange {
+        let mut new_water = self.clone();
+
+        let left = neigborhood.left();
+        let right = neigborhood.right();
+        // Check left and right for new x_dir and move away from obstacles
+        if left.is_some() || left.is_outside() {
+            new_water.x_dir = 1;
+        } else if right.is_some() || right.is_outside() {
+            new_water.x_dir = -1;
+        }
+
+        // Find new movement
+        for_else!(
+            for off in [Offset::new(0, 1), Offset::new(new_water.x_dir, 0), Offset::new(-new_water.x_dir, 0)] => {
+                if let NeighborCell::Inside(opt) = neigborhood.on_relative(&off) {
+                    match opt {
+                        None => {
+                            new_water.movement = off;
+                            // Check if the movement is down and apply gravity
+                            if off.is_down() {
+                                new_water.velocity = MAX_VELOCITY.min(new_water.velocity + GRAVITY);
+                            }
+                            break;
+                        }
+                        Some(other) => {
+                            if self.can_switch_with(other) {
+                                new_water.movement = off;
+                                // Apply some slowdown as if by friction of switching
+                                new_water.velocity = DEFAULT_VELOCITY.max(new_water.velocity - SWITCH_SLOWDOWN);
+                                break;
+                            }
+                        }
+                    }
+                }
+            } else {
+                new_water.movement = Offset::zero();
+                new_water.velocity = DEFAULT_VELOCITY;
+            }
+        );
+
         // Check number of neighbors that are IsBurning and AntiBurn
         let mut count = 0;
-        for opt in neigborhood.iter().flatten() {
-            if let Some(neigh) = opt {
+        for opt in neigborhood.iter() {
+            if let NeighborCell::Inside(Some(neigh)) = opt {
                 match neigh.get_burnability() {
                     Burnability::IsBurning(_) => count += 1,
                     Burnability::AntiBurn => count -= 1,
@@ -110,27 +118,7 @@ impl Particle for Water {
         if count > 0 {
             ParticleChange::Changed(Some(Vapor::new()))
         } else {
-            // Check left and right for direction change
-            // Left
-            if self.x_dir == -1 {
-                if let Some(p) = &neigborhood[1][0] {
-                    if p.get_density() >= self.get_density() {
-                        let mut new_water = self.clone();
-                        new_water.x_dir = 1;
-                        return ParticleChange::Changed(Some(Box::new(new_water)));
-                    }
-                }
-            } else if self.x_dir == 1 {
-                if let Some(p) = &neigborhood[1][2] {
-                    if p.get_density() >= self.get_density() {
-                        let mut new_water = self.clone();
-                        new_water.x_dir = -1;
-                        return ParticleChange::Changed(Some(Box::new(new_water)));
-                    }
-                }
-            }
-
-            ParticleChange::None
+            ParticleChange::Changed(Some(Box::new(new_water)))
         }
     }
 }

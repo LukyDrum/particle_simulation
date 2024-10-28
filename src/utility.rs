@@ -39,3 +39,38 @@ where
 {
     thread_rng().gen_range((middle - radius)..=(middle + radius))
 }
+
+/// Takes a for loop with an else branch. The else branch is executed if the for loop finishes all of its loops.
+///
+/// # Example:
+/// ```rust
+///     use particle_simulation::for_else;
+///
+///     for_else!(
+///         for x in 1..10 => {
+///             if x == 5 {
+///                 break;
+///             }
+///         } else {
+///             unreachable!();
+///         }
+///     );
+/// ```
+#[macro_export]
+macro_rules! for_else {
+    (for $var:ident in $collection:expr => $for_block:block else $else_block:block) => {
+        #[allow(unused)]
+        let mut flag = false;
+        for $var in $collection {
+            flag = false;
+
+            $for_block;
+
+            flag = true;
+        }
+        if flag {
+            $else_block
+        }
+    };
+}
+pub use for_else;

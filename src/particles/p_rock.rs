@@ -1,5 +1,3 @@
-use std::collections::LinkedList;
-
 use crate::particles::constants::*;
 use crate::particles::{get_near_color, Particle};
 use crate::Offset;
@@ -33,15 +31,15 @@ impl Particle for Rock {
         DENSITY
     }
 
-    fn _get_offsets(&self) -> LinkedList<Offset> {
-        LinkedList::new()
-    }
-
     fn is_moveable(&self) -> bool {
         false
     }
 
     fn is_solid(&self) -> bool {
         true
+    }
+
+    fn get_movement(&self) -> Offset {
+        Offset::zero()
     }
 }

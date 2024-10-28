@@ -10,7 +10,7 @@ use std::collections::LinkedList;
 use crate::{
     frame::Frame,
     offset::Offset,
-    particles::{constants::*, Neighborhood, Particle, ParticleChange},
+    particles::{NeighborCell, Neighborhood, Particle, ParticleChange},
     sprite::Sprite,
 };
 
@@ -32,7 +32,6 @@ impl SimInfo {
 enum SimMove {
     Move(usize),   // FROM
     Switch(usize), // FROM
-    Stop,          // Happens when particle with velocity stops in place
 }
 
 pub struct Simulation {
@@ -233,42 +232,20 @@ impl Simulation {
 
                 // Particles current offset
                 let p_offset = self.index_to_offset(i);
-                let mut did_move = false;
                 // Check the maximum offsets the particle would like to move to
-                for max_offset in p.get_max_offsets() {
-                    // Find the maximum offset to which the particle CAN move
-                    let new_offset = self.find_max_offset(p_offset, max_offset, p);
-
-                    // Check for out of bounds
-                    if !self.is_within(&new_offset) {
-                        continue;
-                    }
-
-                    // Convert to index
-                    let new_index = self.offset_to_index(&new_offset);
-
-                    // Try for SimMove::MOVE
-                    if self.particles[new_index].is_none() {
-                        // Add the value to moves list
-                        moves_list.push_back((new_index, SimMove::Move(i)));
-                        did_move = true;
-                        break;
-                    }
-
-                    // Try for SimMove::SWITCH
-                    if let Some(other_p) = &self.particles[new_index] {
-                        if Self::can_switch(p, other_p) {
-                            // Add the value to moves list
-                            moves_list.push_back((new_index, SimMove::Switch(i)));
-                            did_move = true;
-                            break;
-                        }
-                    }
+                let max_offset = p.get_movement();
+                // Continue to next particle if the offset is (0, 0)
+                if max_offset.is_zero() {
+                    continue;
                 }
-
-                // If the particle did not move (that means there was no chance for it to move) we should stop it's velocity (if it is greater than default velocity)
-                if !did_move && p.get_velocity() > DEFAULT_VELOCITY {
-                    moves_list.push_back((i, SimMove::Stop));
+                // Find the maximum offset to which the particle CAN move
+                // All necceseary check are done here
+                let new_offset = self.find_max_offset(p_offset, max_offset, p);
+                // Convert to index
+                let new_index = self.offset_to_index(&new_offset);
+                match self.particles[new_index] {
+                    None => moves_list.push_back((new_index, SimMove::Move(i))),
+                    Some(_) => moves_list.push_back((new_index, SimMove::Switch(i))),
                 }
             }
         }
@@ -299,13 +276,7 @@ impl Simulation {
                     let opt = &self.particles[from];
 
                     if let Some(p) = opt {
-                        let mut p = *clone_box(&*p);
-                        // Check if the direction is aiming down
-                        let direction = self.index_to_offset(to) - self.index_to_offset(from);
-                        if direction.is_down() {
-                            p.apply_acceleration(GRAVITY);
-                        }
-
+                        let p = *clone_box(&*p);
                         // Move the particle
                         self.particles[to] = Some(p);
                         // Free the old sport
@@ -317,30 +288,18 @@ impl Simulation {
                     let opt_on_to = &self.particles[to];
                     let opt_on_with = self.particles[with].clone();
 
-                    // TODO: Maybe calculate this value based on density?
-                    let slow_down = 0.1;
-
                     if let Some(p) = opt_on_to {
-                        let mut p = *clone_box(&*p);
-                        p.apply_acceleration(-slow_down);
+                        let p = *clone_box(&*p);
                         self.particles[with] = Some(p);
                     } else {
                         self.particles[with] = None;
                     }
 
                     if let Some(p) = opt_on_with {
-                        let mut p = clone_box(&*p);
-                        p.apply_acceleration(-slow_down);
+                        let p = clone_box(&*p);
                         self.particles[to] = Some(p);
                     } else {
                         self.particles[to] = None;
-                    }
-                }
-                // Partcile does no move but still has velocity, then we should reset it's velocity
-                SimMove::Stop => {
-                    let mut opt = &mut self.particles[to];
-                    if let Some(p) = &mut opt {
-                        p.reset_velocity();
                     }
                 }
             }
@@ -414,7 +373,7 @@ impl Simulation {
 
             if let Some(other_p) = opt {
                 // If other_p does not have lower density, then we won't be able to switch
-                if !(Self::can_switch(particle, other_p)) {
+                if !(particle.can_switch_with(other_p)) {
                     return offsets_between[i - 1];
                 }
             }
@@ -449,15 +408,8 @@ impl Simulation {
         );
     }
 
-    /// Particles can switch if other particle has lower density
-    /// OR the particle has high enough speed and the other particle is not completely solid.
-    fn can_switch(p: &Box<dyn Particle>, other_p: &Box<dyn Particle>) -> bool {
-        other_p.get_density() < p.get_density()
-            || (p.get_velocity() > DEFAULT_VELOCITY && !other_p.is_solid())
-    }
-
     fn get_neighborhood(&self, offset: Offset) -> Neighborhood {
-        let mut neigh: Neighborhood = vec![vec![&None; 3]; 3];
+        let mut neigh: Neighborhood = Neighborhood(vec![vec![NeighborCell::Outside; 3]; 3]);
 
         for row_off in -1..=1 {
             for col_off in -1..=1 {
@@ -466,9 +418,7 @@ impl Simulation {
                 let col = (col_off + 1) as usize;
 
                 if self.is_within(&new_offset) {
-                    neigh[row][col] = self.get_particle(&new_offset);
-                } else {
-                    neigh[row][col] = &None;
+                    neigh.0[row][col] = NeighborCell::Inside(self.get_particle(&new_offset));
                 }
             }
         }

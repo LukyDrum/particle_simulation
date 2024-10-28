@@ -1,5 +1,3 @@
-use std::collections::LinkedList;
-
 use crate::particles::constants::*;
 use crate::particles::{get_near_color, Particle};
 use crate::Offset;
@@ -39,10 +37,6 @@ impl Particle for Wood {
         DENSITY
     }
 
-    fn _get_offsets(&self) -> LinkedList<Offset> {
-        LinkedList::new()
-    }
-
     fn is_moveable(&self) -> bool {
         false
     }
@@ -57,6 +51,10 @@ impl Particle for Wood {
 
     fn set_burnability(&mut self, new_burnability: Burnability) -> () {
         self.burnability = new_burnability;
+    }
+
+    fn get_movement(&self) -> Offset {
+        Offset::zero()
     }
 
     fn update(&self, neigborhood: Neighborhood) -> ParticleChange {

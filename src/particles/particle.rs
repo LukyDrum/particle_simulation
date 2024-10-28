@@ -1,13 +1,9 @@
-use std::collections::LinkedList;
-
 use dyn_clone::DynClone;
 use rand::{thread_rng, Rng};
 
 use crate::offset::Offset;
 
-use super::{constants::DEFAULT_VELOCITY, Burnability};
-
-pub type Neighborhood<'a> = Vec<Vec<&'a Option<Box<dyn Particle>>>>;
+use super::{constants::DEFAULT_VELOCITY, Burnability, Neighborhood};
 
 /// Similiar to Option.
 /// Contains information if the particle has changed or not.
@@ -62,24 +58,21 @@ pub trait Particle: Send + Sync + DynClone {
     /// The returned number is an 8bit unsigned integer (0-255).
     fn get_density(&self) -> u8;
 
-    fn _get_offsets(&self) -> LinkedList<Offset>;
-
-    /// Returns a list of the maximum offsets to which the particle would like to move to.
-    /// Example: A maximum offset of (5, 0) means that the particle would like to move 5 positions to right.
-    fn get_max_offsets(&self) -> LinkedList<Offset> {
-        let mut max_offsets = self._get_offsets();
-        if self.get_velocity_dir() != Offset::zero() {
-            max_offsets.push_front(self.get_velocity_dir() * self.get_velocity() as i32);
-        }
-
-        max_offsets
-    }
+    /// Movement of particle is equal to the direction it wants to travel in times its velocity.
+    fn get_movement(&self) -> Offset;
 
     /// Returns true if the particle is moveable (can move).
     fn is_moveable(&self) -> bool;
 
     /// Returns true if the particle is completly solid (Example: rock).
     fn is_solid(&self) -> bool;
+
+    /// Checks if `self` can switch with `other`.
+    /// This is the default implementation, can be overriden for custom behavior.
+    fn can_switch_with(&self, other: &Box<dyn Particle>) -> bool {
+        self.get_density() > other.get_density()
+            || (self.get_velocity() > DEFAULT_VELOCITY && !other.is_solid())
+    }
 
     // PROPERTIES
 
@@ -102,16 +95,4 @@ pub trait Particle: Send + Sync + DynClone {
     fn get_velocity(&self) -> f32 {
         DEFAULT_VELOCITY
     }
-
-    /// Returns the direction of the particles velocity
-    /// Default: Offset::zero
-    fn get_velocity_dir(&self) -> Offset {
-        Offset::zero()
-    }
-
-    /// Resets the particle velocity to the DEFAULT_VELOCITY.
-    fn reset_velocity(&mut self) -> () {}
-
-    /// Applies the provided acceleration to the velocity of this particle.
-    fn apply_acceleration(&mut self, _acc: f32) -> () {}
 }

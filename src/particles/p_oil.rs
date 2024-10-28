@@ -1,8 +1,4 @@
-use std::collections::LinkedList;
-
-use rand::random;
-
-use crate::particles::constants::*;
+use crate::particles::{constants::*, NeighborCell};
 use crate::particles::{get_near_color, Particle};
 use crate::Offset;
 
@@ -18,6 +14,8 @@ pub struct Oil {
     velocity: f32,
     color: u32,
     burnability: Burnability,
+    movement: Offset,
+    x_dir: i32,
 }
 
 impl Oil {
@@ -26,14 +24,8 @@ impl Oil {
             velocity: DEFAULT_VELOCITY,
             color: get_near_color(COLOR),
             burnability: Burnability::CanBurn,
-        })
-    }
-
-    pub fn with_color(color: u32) -> Box<dyn Particle> {
-        Box::new(Oil {
-            velocity: DEFAULT_VELOCITY,
-            color: get_near_color(color),
-            burnability: Burnability::CanBurn,
+            movement: Offset::zero(),
+            x_dir: if fastrand::bool() { 1 } else { -1 },
         })
     }
 }
@@ -55,22 +47,6 @@ impl Particle for Oil {
         self.velocity
     }
 
-    fn _get_offsets(&self) -> LinkedList<Offset> {
-        let mut lst = LinkedList::new();
-        let vel = self.velocity as i32;
-
-        lst.push_back(Offset::new(0, 1) * vel);
-        if random() {
-            lst.push_back(Offset::new(1, 0) * vel);
-            lst.push_back(Offset::new(-1, 0) * vel);
-        } else {
-            lst.push_back(Offset::new(-1, 0) * vel);
-            lst.push_back(Offset::new(1, 0) * vel);
-        }
-
-        lst
-    }
-
     fn is_moveable(&self) -> bool {
         true
     }
@@ -87,19 +63,55 @@ impl Particle for Oil {
         self.burnability = new_burnability;
     }
 
-    fn reset_velocity(&mut self) -> () {
-        self.velocity = DEFAULT_VELOCITY;
-    }
-
-    fn apply_acceleration(&mut self, acc: f32) -> () {
-        self.velocity = (self.velocity + acc).clamp(DEFAULT_VELOCITY, MAX_VELOCITY);
+    fn get_movement(&self) -> Offset {
+        self.movement * self.velocity as i32
     }
 
     fn update(&self, neigborhood: Neighborhood) -> ParticleChange {
         let mut new_oil = self.clone();
 
-        let res = Burnability::check(&mut new_oil, &neigborhood, BURNABILITY_TIME, true);
+        let left = neigborhood.left();
+        let right = neigborhood.right();
+        // Check left and right for new x_dir and move away from obstacles
+        if left.is_some() && right.is_some() {
+            // Might be possible to switch
+            new_oil.x_dir = if fastrand::bool() { 1 } else { -1 };
+        } else if left.is_some() || left.is_outside() {
+            new_oil.x_dir = 1;
+        } else if right.is_some() || right.is_outside() {
+            new_oil.x_dir = -1;
+        }
 
+        // Find new movement
+        for_else!(
+            for off in [Offset::new(0, 1), Offset::new(new_oil.x_dir, 0), Offset::new(-new_oil.x_dir, 0)] => {
+                if let NeighborCell::Inside(opt) = neigborhood.on_relative(&off) {
+                    match opt {
+                        None => {
+                            new_oil.movement = off;
+                            // Check if the movement is down and apply gravity
+                            if off.is_down() {
+                                new_oil.velocity = MAX_VELOCITY.min(new_oil.velocity + GRAVITY);
+                            }
+                            break;
+                        }
+                        Some(other) => {
+                            if self.can_switch_with(other) {
+                                new_oil.movement = off;
+                                // Apply some slowdown as if by friction of switching
+                                new_oil.velocity = DEFAULT_VELOCITY.max(new_oil.velocity - SWITCH_SLOWDOWN);
+                                break;
+                            }
+                        }
+                    }
+                }
+            } else {
+                new_oil.movement = Offset::zero();
+                new_oil.velocity = DEFAULT_VELOCITY;
+            }
+        );
+
+        let res = Burnability::check(&mut new_oil, &neigborhood, BURNABILITY_TIME, true);
         match res {
             PropertyCheckResult::Updated => {
                 if let Burnability::IsBurning(_) = new_oil.get_burnability() {
@@ -109,7 +121,7 @@ impl Particle for Oil {
                 ParticleChange::Changed(Some(Box::new(new_oil)))
             }
             PropertyCheckResult::Destroyed => ParticleChange::Changed(Some(Smoke::new())),
-            PropertyCheckResult::None => ParticleChange::None,
+            PropertyCheckResult::None => ParticleChange::Changed(Some(Box::new(new_oil))),
         }
     }
 }

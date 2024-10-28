@@ -1,22 +1,8 @@
-// MODS
-mod frame;
-mod offset;
-mod particles;
-mod simulation;
-mod sprite;
-mod test;
-mod utility;
-
 // IMPORTS
 use std::time::SystemTime;
 
-use crate::frame::Frame;
 use minifb::{Key, MouseButton, Window, WindowOptions};
-use offset::Offset;
-use particles::{Fly, Mud, Oil, Particle, Rock, Sand, Smoke, Spark, Static, Vapor, Water, Wood};
-use simulation::Simulation;
-use sprite::Sprite;
-use utility::{draw_ui_to_frame, get_offsets_for_square};
+use particle_simulation::{particles::*, utility::*, Frame, Offset, Simulation, Sprite};
 
 const WIDTH: usize = 200;
 const HEIGHT: usize = 200;
@@ -67,21 +53,21 @@ fn main() {
 
     simulation.bg_color = 0xFFD1FFFC;
     // Load and insert sprite
-    let fit_sprite = Sprite::load("assets/fit_pixel_blue.png");
-    if let Ok(sprite) = fit_sprite {
-        simulation.insert_sprite(sprite, &Offset::new(80, 50), |color| match color {
-            0xFFFFFFFF => Static::new(color),
-            _ => Water::with_color(color),
-        });
-    }
+    // let fit_sprite = Sprite::load("assets/fit_pixel_blue.png");
+    // if let Ok(sprite) = fit_sprite {
+    //     simulation.insert_sprite(sprite, &Offset::new(80, 50), |color| match color {
+    //         0xFFFFFFFF => Static::new(color),
+    //         _ => Water::with_color(color),
+    //     });
+    // }
 
-    let fit_sprite = Sprite::load("assets/fit_pixel.png");
-    if let Ok(sprite) = fit_sprite {
-        simulation.insert_sprite(sprite, &Offset::new(20, 50), |color| match color {
-            0xFF000000 => Static::new(color),
-            _ => Sand::with_color(color),
-        });
-    }
+    // let fit_sprite = Sprite::load("assets/fit_pixel.png");
+    // if let Ok(sprite) = fit_sprite {
+    //     simulation.insert_sprite(sprite, &Offset::new(20, 50), |color| match color {
+    //         0xFF000000 => Static::new(color),
+    //         _ => Sand::with_color(color),
+    //     });
+    // }
 
     // Print controls to terminal
     println!();
