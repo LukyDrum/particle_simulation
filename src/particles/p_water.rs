@@ -2,7 +2,7 @@ use std::collections::LinkedList;
 
 use fastrand;
 
-use crate::particles::constants::*;
+use crate::particles::{constants::*, NeighborCell};
 use crate::particles::{get_near_color, Particle};
 use crate::Offset;
 
@@ -85,24 +85,28 @@ impl Particle for Water {
     fn update(&self, neigborhood: Neighborhood) -> ParticleChange {
         let mut new_water = self.clone();
 
-        // Check left and right for new x_dir
-        if neigborhood.left().is_some() {
+        let left = neigborhood.left();
+        let right = neigborhood.right();
+        // Check left and right for new x_dir and move away from obstacles
+        if left.is_some() || left.is_outside() {
             new_water.x_dir = 1;
-        } else if neigborhood.right().is_some() {
+        } else if right.is_some() || right.is_outside() {
             new_water.x_dir = -1;
         }
 
         for_else!(
             for off in [Offset::new(0, 1), Offset::new(new_water.x_dir, 1), Offset::new(new_water.x_dir, 0)] => {
-                match neigborhood.on_relative(&off) {
-                    None => {
-                        new_water.movement = off;
-                        break;
-                    }
-                    Some(other) => {
-                        if self.can_switch_with(other) {
+                if let NeighborCell::Inside(opt) = neigborhood.on_relative(&off) {
+                    match opt {
+                        None => {
                             new_water.movement = off;
                             break;
+                        }
+                        Some(other) => {
+                            if self.can_switch_with(other) {
+                                new_water.movement = off;
+                                break;
+                            }
                         }
                     }
                 }
@@ -115,7 +119,7 @@ impl Particle for Water {
         // Check number of neighbors that are IsBurning and AntiBurn
         let mut count = 0;
         for opt in neigborhood.iter() {
-            if let Some(neigh) = opt {
+            if let NeighborCell::Inside(Some(neigh)) = opt {
                 match neigh.get_burnability() {
                     Burnability::IsBurning(_) => count += 1,
                     Burnability::AntiBurn => count -= 1,

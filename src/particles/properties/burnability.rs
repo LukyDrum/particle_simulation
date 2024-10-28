@@ -1,6 +1,6 @@
 use rand::random;
 
-use crate::particles::{Neighborhood, Particle};
+use crate::particles::{NeighborCell, Neighborhood, Particle};
 
 use super::PropertyCheckResult;
 
@@ -59,7 +59,7 @@ impl Burnability {
         let mut burning_count = 0;
         let mut antiburn_count = 0;
         for opt in neigborhood.iter() {
-            if let Some(neigh) = opt {
+            if let NeighborCell::Inside(Some(neigh)) = opt {
                 match neigh.get_burnability() {
                     Burnability::IsBurning(_) => burning_count += 1,
                     Burnability::AntiBurn => antiburn_count += 1,

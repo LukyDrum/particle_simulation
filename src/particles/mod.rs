@@ -26,6 +26,6 @@ pub use p_sand::Sand;
 // pub use p_vapor::Vapor;
 pub use p_water::Water;
 // pub use p_wood::Wood;
-pub use neighborhood::Neighborhood;
+pub use neighborhood::{NeighborCell, Neighborhood};
 pub use particle::{get_near_color, Particle, ParticleChange};
 pub use properties::Burnability;

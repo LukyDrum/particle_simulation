@@ -10,7 +10,7 @@ use std::collections::LinkedList;
 use crate::{
     frame::Frame,
     offset::Offset,
-    particles::{constants::*, Neighborhood, Particle, ParticleChange},
+    particles::{constants::*, NeighborCell, Neighborhood, Particle, ParticleChange},
     sprite::Sprite,
 };
 
@@ -430,7 +430,7 @@ impl Simulation {
     }
 
     fn get_neighborhood(&self, offset: Offset) -> Neighborhood {
-        let mut neigh: Neighborhood = Neighborhood(vec![vec![&None; 3]; 3]);
+        let mut neigh: Neighborhood = Neighborhood(vec![vec![NeighborCell::Outside; 3]; 3]);
 
         for row_off in -1..=1 {
             for col_off in -1..=1 {
@@ -439,9 +439,7 @@ impl Simulation {
                 let col = (col_off + 1) as usize;
 
                 if self.is_within(&new_offset) {
-                    neigh.0[row][col] = self.get_particle(&new_offset);
-                } else {
-                    neigh.0[row][col] = &None;
+                    neigh.0[row][col] = NeighborCell::Inside(self.get_particle(&new_offset));
                 }
             }
         }

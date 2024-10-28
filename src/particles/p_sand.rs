@@ -2,7 +2,7 @@ use std::collections::LinkedList;
 
 use fastrand;
 
-use crate::particles::constants::*;
+use crate::particles::{constants::*, NeighborCell};
 use crate::particles::{get_near_color, Particle};
 use crate::Offset;
 
@@ -89,15 +89,17 @@ impl Particle for Sand {
 
         for_else!(
             for off in [Offset::new(0, 1), Offset::new(-rand_x, 1), Offset::new(rand_x, 1)] => {
-                match neigborhood.on_relative(&off) {
-                    None => {
-                        new_sand.movement = off;
-                        break;
-                    }
-                    Some(other) => {
-                        if self.can_switch_with(other) {
+                if let NeighborCell::Inside(opt) = neigborhood.on_relative(&off) {
+                    match opt {
+                        None => {
                             new_sand.movement = off;
                             break;
+                        }
+                        Some(other) => {
+                            if self.can_switch_with(other) {
+                                new_sand.movement = off;
+                                break;
+                            }
                         }
                     }
                 }
