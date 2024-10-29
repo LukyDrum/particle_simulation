@@ -39,6 +39,8 @@ impl GUIParticleSim {
 
 impl eframe::App for GUIParticleSim {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        ctx.set_zoom_factor(2.0);
+
         egui::CentralPanel::default().show(ctx, |ui| {
             // Define a rect at a position with size
             // This will hold the texture with the visual output of the simulation
