@@ -38,7 +38,7 @@ pub struct Simulation {
     width: usize,
     height: usize,
     pub bg_color: u32,
-    particles: Vec<Option<Box<dyn Particle>>>,
+    pub particles: Vec<Option<Box<dyn Particle>>>,
     moves: FxHashMap<usize, Vec<SimMove>>, // Destination index, Moves to be done ending at that index
     sim_info: SimInfo,
     pub print_debug: bool,
