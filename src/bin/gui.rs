@@ -19,7 +19,6 @@ struct GUIParticleSim {
     simulation: Simulation,
     pixels: Vec<egui::Color32>,
     texture: egui::TextureHandle,
-    index: usize,
 }
 
 impl GUIParticleSim {
@@ -34,7 +33,6 @@ impl GUIParticleSim {
                 egui::ColorImage::new([200, 200], egui::Color32::from_rgb(0, 0, 0)),
                 egui::TextureOptions::NEAREST,
             ),
-            index: 0,
         }
     }
 }
@@ -66,7 +64,7 @@ impl eframe::App for GUIParticleSim {
                 }
             });
 
-            let black = egui::Color32::from_rgb(255, 255, 255);
+            let black = egui::Color32::from_rgb(0, 0, 0);
             for (i, opt) in self.simulation.particles.iter().enumerate() {
                 match opt {
                     Some(p) => {
@@ -100,8 +98,8 @@ impl eframe::App for GUIParticleSim {
 }
 
 fn u32_to_color32(color: u32) -> egui::Color32 {
-    let r = color & 0x00FF0000;
-    let g = color & 0x0000FF00;
+    let r = (color & 0x00FF0000) >> 16;
+    let g = (color & 0x0000FF00) >> 8;
     let b = color & 0x000000FF;
 
     egui::Color32::from_rgb(r as u8, g as u8, b as u8)
