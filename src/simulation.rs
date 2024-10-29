@@ -38,7 +38,7 @@ pub struct Simulation {
     width: usize,
     height: usize,
     pub bg_color: u32,
-    pub particles: Vec<Option<Box<dyn Particle>>>,
+    particles: Vec<Option<Box<dyn Particle>>>,
     moves: FxHashMap<usize, Vec<SimMove>>, // Destination index, Moves to be done ending at that index
     sim_info: SimInfo,
     pub print_debug: bool,
@@ -55,6 +55,10 @@ impl Simulation {
             sim_info: SimInfo::new(),
             print_debug: false,
         }
+    }
+
+    pub fn particles_iter(&self) -> std::slice::Iter<'_, Option<Box<dyn Particle>>> {
+        self.particles.iter()
     }
 
     pub fn draw_to_frame(&self, frame: &mut Frame) -> () {
