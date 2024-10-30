@@ -15,7 +15,7 @@ fn color_to_color32(c: &Color) -> egui::Color32 {
 fn main() {
     let native_options = eframe::NativeOptions::default();
     let _ = eframe::run_native(
-        "My egui App",
+        "Particle Simulation",
         native_options,
         Box::new(|cc| Ok(Box::new(GUIParticleSim::new(cc)))),
     );
