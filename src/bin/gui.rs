@@ -23,7 +23,6 @@ fn main() {
 
 struct GUIParticleSim {
     simulation: Simulation,
-    pixels: Vec<egui::Color32>,
     texture: egui::TextureHandle,
 }
 
@@ -33,7 +32,6 @@ impl GUIParticleSim {
 
         GUIParticleSim {
             simulation,
-            pixels: vec![egui::Color32::from_rgb(0, 0, 0); SIM_WIDTH * SIM_HEIGHT],
             texture: cc.egui_ctx.load_texture(
                 "sim_view",
                 egui::ColorImage::new([SIM_WIDTH, SIM_HEIGHT], egui::Color32::from_rgb(0, 0, 0)),
@@ -73,21 +71,21 @@ impl eframe::App for GUIParticleSim {
             });
 
             let bg = egui::Color32::LIGHT_BLUE;
-            for (i, opt) in self.simulation.particles_iter().enumerate() {
-                match opt {
-                    Some(p) => {
-                        self.pixels[i] = color_to_color32(p.get_color());
-                    }
-                    None => {
-                        self.pixels[i] = bg;
-                    }
-                }
-            }
+            // Map particles to colors
+            let pixels: Vec<egui::Color32> = self
+                .simulation
+                .particles_iter()
+                .map(|opt| match opt {
+                    Some(p) => color_to_color32(p.get_color()),
+                    None => bg,
+                })
+                .collect();
+
             // Draw pixels to texture
             self.texture.set(
                 egui::ColorImage {
                     size: [SIM_WIDTH, SIM_HEIGHT],
-                    pixels: self.pixels.clone(),
+                    pixels,
                 },
                 egui::TextureOptions::NEAREST,
             );
