@@ -1,15 +1,15 @@
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
+use crate::particles::Particle;
 use crate::particles::{constants::*, NeighborCell};
-use crate::particles::{get_near_color, Particle};
 use crate::utility::get_value_around;
-use crate::Offset;
+use crate::{Color, Offset};
 
 use super::properties::PropertyCheckResult;
 use super::{Burnability, Neighborhood, ParticleChange};
 
-const COLOR: u32 = 0xFF152E02;
+const COLOR: u32 = 0x152E02;
 /// Default lifetime in number of updates
 const DEFAULT_LIFETIME: u32 = 1000;
 const LIFETIME_OFF: u32 = 400;
@@ -30,7 +30,7 @@ const OFFSETS: [Offset; 9] = [
 
 #[derive(Clone)]
 pub struct Fly {
-    color: u32,
+    color: Color,
     lifetime: u32,
     burnability: Burnability,
     movement: Offset,
@@ -40,7 +40,7 @@ pub struct Fly {
 impl Fly {
     pub fn new() -> Box<dyn Particle> {
         Box::new(Fly {
-            color: get_near_color(COLOR),
+            color: Color::hex(COLOR).similiar(),
             lifetime: get_value_around(DEFAULT_LIFETIME, LIFETIME_OFF),
             burnability: Burnability::CanBurn,
             movement: Offset::zero(),
@@ -54,8 +54,8 @@ impl Particle for Fly {
         "Fly"
     }
 
-    fn get_color(&self) -> u32 {
-        self.color
+    fn get_color(&self) -> &Color {
+        &self.color
     }
 
     fn get_density(&self) -> u8 {
@@ -139,7 +139,7 @@ impl Particle for Fly {
         match res {
             PropertyCheckResult::Updated => {
                 if let Burnability::IsBurning(_) = new_fly.get_burnability() {
-                    new_fly.color = get_near_color(FIRE_COLOR);
+                    new_fly.color = Color::hex(FIRE_COLOR).similiar();
                 }
 
                 ParticleChange::Changed(Some(Box::new(new_fly)))

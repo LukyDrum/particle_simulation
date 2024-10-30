@@ -1,10 +1,15 @@
+// Drawing to image was inspired by:
 // Source: https://github.com/bluurryy/noise-functions-demo/blob/main/src/app.rs
 
 use eframe::egui;
-use particle_simulation::{particles::Sand, Offset, Simulation};
+use particle_simulation::{particles::Sand, Color, Offset, Simulation};
 
 const SIM_WIDTH: usize = 200;
 const SIM_HEIGHT: usize = 200;
+
+fn color_to_color32(c: &Color) -> egui::Color32 {
+    egui::Color32::from_rgba_unmultiplied(c.r, c.g, c.b, c.a)
+}
 
 fn main() {
     let native_options = eframe::NativeOptions::default();
@@ -66,11 +71,11 @@ impl eframe::App for GUIParticleSim {
                 }
             });
 
-            let bg = u32_to_color32(self.simulation.bg_color);
+            let bg = egui::Color32::LIGHT_BLUE;
             for (i, opt) in self.simulation.particles_iter().enumerate() {
                 match opt {
                     Some(p) => {
-                        self.pixels[i] = u32_to_color32(p.get_color());
+                        self.pixels[i] = color_to_color32(p.get_color());
                     }
                     None => {
                         self.pixels[i] = bg;
@@ -97,12 +102,4 @@ impl eframe::App for GUIParticleSim {
         // Request repaint again
         ctx.request_repaint();
     }
-}
-
-fn u32_to_color32(color: u32) -> egui::Color32 {
-    let r = (color & 0x00FF0000) >> 16;
-    let g = (color & 0x0000FF00) >> 8;
-    let b = color & 0x000000FF;
-
-    egui::Color32::from_rgb(r as u8, g as u8, b as u8)
 }

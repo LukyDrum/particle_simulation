@@ -1,18 +1,18 @@
+use crate::particles::Particle;
 use crate::particles::{constants::*, NeighborCell};
-use crate::particles::{get_near_color, Particle};
-use crate::Offset;
+use crate::{Color, Offset};
 
 use super::properties::PropertyCheckResult;
 use super::{Burnability, Neighborhood, ParticleChange, Smoke};
 
-const COLOR: u32 = 0xFF996E17;
+const COLOR: u32 = 0x996E17;
 const DENSITY: u8 = 120;
 const BURNABILITY_TIME: u8 = 100;
 
 #[derive(Clone)]
 pub struct Oil {
     velocity: f32,
-    color: u32,
+    color: Color,
     burnability: Burnability,
     movement: Offset,
     x_dir: i32,
@@ -22,7 +22,7 @@ impl Oil {
     pub fn new() -> Box<dyn Particle> {
         Box::new(Oil {
             velocity: DEFAULT_VELOCITY,
-            color: get_near_color(COLOR),
+            color: Color::hex(COLOR).similiar(),
             burnability: Burnability::CanBurn,
             movement: Offset::zero(),
             x_dir: if fastrand::bool() { 1 } else { -1 },
@@ -35,8 +35,8 @@ impl Particle for Oil {
         "Oil"
     }
 
-    fn get_color(&self) -> u32 {
-        self.color
+    fn get_color(&self) -> &Color {
+        &self.color
     }
 
     fn get_density(&self) -> u8 {
@@ -115,7 +115,7 @@ impl Particle for Oil {
         match res {
             PropertyCheckResult::Updated => {
                 if let Burnability::IsBurning(_) = new_oil.get_burnability() {
-                    new_oil.color = get_near_color(FIRE_COLOR);
+                    new_oil.color = Color::hex(FIRE_COLOR).similiar();
                 }
 
                 ParticleChange::Changed(Some(Box::new(new_oil)))

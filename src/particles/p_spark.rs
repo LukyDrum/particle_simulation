@@ -1,10 +1,10 @@
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
+use crate::particles::Particle;
 use crate::particles::{constants::*, NeighborCell};
-use crate::particles::{get_near_color, Particle};
 use crate::utility::get_value_around;
-use crate::Offset;
+use crate::{Color, Offset};
 
 use super::properties::PropertyCheckResult;
 use super::{Burnability, Neighborhood, ParticleChange};
@@ -21,7 +21,7 @@ const OFFSETS: [Offset; 3] = [
 
 #[derive(Clone)]
 pub struct Spark {
-    color: u32,
+    color: Color,
     burnability: Burnability,
     movement: Offset,
 }
@@ -29,7 +29,7 @@ pub struct Spark {
 impl Spark {
     pub fn new() -> Box<dyn Particle> {
         Box::new(Spark {
-            color: get_near_color(COLOR),
+            color: Color::hex(COLOR).similiar(),
             burnability: Burnability::IsBurning(get_value_around(DEFAULT_LIFETIME, LIFETIME_OFF)),
             movement: Offset::zero(),
         })
@@ -41,8 +41,8 @@ impl Particle for Spark {
         "Spark"
     }
 
-    fn get_color(&self) -> u32 {
-        self.color
+    fn get_color(&self) -> &Color {
+        &self.color
     }
 
     fn get_density(&self) -> u8 {

@@ -1,19 +1,19 @@
 use fastrand;
 
+use crate::particles::Particle;
 use crate::particles::{constants::*, NeighborCell, Vapor};
-use crate::particles::{get_near_color, Particle};
-use crate::Offset;
+use crate::{Color, Offset};
 
 // use super::{Burnability, Neighborhood, ParticleChange, Vapor};
 use super::{Burnability, Neighborhood, ParticleChange};
 
-const COLOR: u32 = 0xFF326ECF;
+const COLOR: u32 = 0x326ECF;
 const DENSITY: u8 = 128;
 
 #[derive(Clone)]
 pub struct Water {
     velocity: f32,
-    color: u32,
+    color: Color,
     movement: Offset,
     x_dir: i32, // Used to keep water keeping in one side direction until it can no longer - helps with spreading
 }
@@ -22,7 +22,7 @@ impl Water {
     pub fn new() -> Box<dyn Particle> {
         Box::new(Water {
             velocity: DEFAULT_VELOCITY,
-            color: get_near_color(COLOR),
+            color: Color::hex(COLOR).similiar(),
             movement: Offset::new(0, 1),
             x_dir: if fastrand::bool() { 1 } else { -1 }, // Start with a random x_dir
         })
@@ -34,8 +34,8 @@ impl Particle for Water {
         "Water"
     }
 
-    fn get_color(&self) -> u32 {
-        self.color
+    fn get_color(&self) -> &Color {
+        &self.color
     }
 
     fn get_density(&self) -> u8 {

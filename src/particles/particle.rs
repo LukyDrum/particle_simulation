@@ -1,9 +1,8 @@
 use dyn_clone::DynClone;
-use rand::{thread_rng, Rng};
-
-use crate::offset::Offset;
 
 use super::{constants::DEFAULT_VELOCITY, Burnability, Neighborhood};
+use crate::offset::Offset;
+use crate::Color;
 
 /// Similiar to Option.
 /// Contains information if the particle has changed or not.
@@ -24,17 +23,6 @@ impl ParticleChange {
     }
 }
 
-/// Returns a color similiar to the color provided
-pub fn get_near_color(color: u32) -> u32 {
-    let off = thread_rng().gen_range(0..0xF);
-
-    let mut fin_color = color + off;
-    fin_color += off << 8;
-    fin_color += off << 16;
-
-    fin_color
-}
-
 // Needed for DynClone
 dyn_clone::clone_trait_object!(Particle);
 
@@ -52,7 +40,7 @@ pub trait Particle: Send + Sync + DynClone {
     }
 
     /// Returns the color of the particle.
-    fn get_color(&self) -> u32;
+    fn get_color(&self) -> &Color;
 
     /// Returns the density of this particle.
     /// The returned number is an 8bit unsigned integer (0-255).

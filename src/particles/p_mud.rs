@@ -1,18 +1,18 @@
+use crate::particles::Particle;
 use crate::particles::{constants::*, NeighborCell};
-use crate::particles::{get_near_color, Particle};
 use crate::utility::get_value_around;
-use crate::Offset;
+use crate::{Color, Offset};
 
 use super::ParticleChange;
 
-const COLOR: u32 = 0xFF91473D;
+const COLOR: u32 = 0x91473D;
 const DEFAULT_SIDE_FRICTION: u8 = 16;
 const FRICTION_OFF: u8 = 4;
 
 #[derive(Clone)]
 pub struct Mud {
     velocity: f32,
-    color: u32,
+    color: Color,
     /// Definies how much does the mud particle want to fall to the side. Actually falls when it reaches zero
     side_friction: u8,
     movement: Offset,
@@ -22,7 +22,7 @@ impl Mud {
     pub fn new() -> Box<dyn Particle> {
         Box::new(Mud {
             velocity: DEFAULT_VELOCITY,
-            color: get_near_color(COLOR),
+            color: Color::hex(COLOR).similiar(),
             side_friction: get_side_friction(),
             movement: Offset::zero(),
         })
@@ -34,8 +34,8 @@ impl Particle for Mud {
         "Mud"
     }
 
-    fn get_color(&self) -> u32 {
-        self.color
+    fn get_color(&self) -> &Color {
+        &self.color
     }
 
     fn get_density(&self) -> u8 {

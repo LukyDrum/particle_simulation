@@ -1,14 +1,10 @@
 use dyn_clone::clone_box;
 use rand::Rng;
-use rayon::{
-    iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator},
-    slice::ParallelSliceMut,
-};
+use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use rustc_hash::FxHashMap;
 use std::collections::LinkedList;
 
 use crate::{
-    frame::Frame,
     offset::Offset,
     particles::{NeighborCell, Neighborhood, Particle, ParticleChange},
     sprite::Sprite,
@@ -37,7 +33,6 @@ enum SimMove {
 pub struct Simulation {
     width: usize,
     height: usize,
-    pub bg_color: u32,
     particles: Vec<Option<Box<dyn Particle>>>,
     moves: FxHashMap<usize, Vec<SimMove>>, // Destination index, Moves to be done ending at that index
     sim_info: SimInfo,
@@ -49,7 +44,6 @@ impl Simulation {
         Simulation {
             width,
             height,
-            bg_color: 0x00000000,
             particles: vec![None; width * height],
             moves: FxHashMap::default(),
             sim_info: SimInfo::new(),
@@ -59,35 +53,6 @@ impl Simulation {
 
     pub fn particles_iter(&self) -> std::slice::Iter<'_, Option<Box<dyn Particle>>> {
         self.particles.iter()
-    }
-
-    pub fn draw_to_frame(&self, frame: &mut Frame) -> () {
-        let logical_pixel_size = frame.logical_scale;
-        let real_row_width = frame.width();
-        let chunk_size = real_row_width * frame.logical_scale; // 1 row of log. pixel correspond to this much of real pixels
-        let buffer = &mut frame.buffer;
-
-        buffer
-            .par_chunks_mut(chunk_size)
-            .enumerate()
-            .for_each(|(row, chunk)| {
-                // Draw logical pixels
-                for col in (0..real_row_width).step_by(logical_pixel_size) {
-                    let particle_index = row * self.width + (col / logical_pixel_size);
-                    let opt = &self.particles[particle_index];
-                    let color = match opt {
-                        Some(p) => p.get_color(),
-                        None => self.bg_color,
-                    };
-
-                    for sub_col in 0..logical_pixel_size {
-                        for sub_row in 0..logical_pixel_size {
-                            let pixel_index = sub_row * real_row_width + col + sub_col;
-                            chunk[pixel_index] = color;
-                        }
-                    }
-                }
-            });
     }
 
     pub fn add_particle(&mut self, offset: &Offset, particle: Box<dyn Particle>) -> bool {
