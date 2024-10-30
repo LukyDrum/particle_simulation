@@ -36,7 +36,6 @@ pub struct Simulation {
     particles: Vec<Option<Box<dyn Particle>>>,
     moves: FxHashMap<usize, Vec<SimMove>>, // Destination index, Moves to be done ending at that index
     sim_info: SimInfo,
-    pub print_debug: bool,
 }
 
 impl Simulation {
@@ -47,7 +46,6 @@ impl Simulation {
             particles: vec![None; width * height],
             moves: FxHashMap::default(),
             sim_info: SimInfo::new(),
-            print_debug: false,
         }
     }
 
@@ -112,12 +110,11 @@ impl Simulation {
     }
 
     pub fn simulate_step(&mut self) -> () {
+        // Reset moves in sim info
+        self.sim_info.moves_made_last_frame = 0;
+
         self.find_moves_multithreaded();
         self.apply_moves();
-        // Print simulation informations.
-        if self.print_debug {
-            self.print_sim_info();
-        }
 
         self.clear_moves();
 
@@ -281,9 +278,6 @@ impl Simulation {
     /// Clears the moves map
     fn clear_moves(&mut self) -> () {
         self.moves.clear();
-
-        // Update Sim Info
-        self.sim_info.moves_made_last_frame = 0;
     }
 
     /// Updates the inner state of each particle
@@ -367,14 +361,6 @@ impl Simulation {
         let x = index - (y * self.width);
 
         Offset::new(x as i32, y as i32)
-    }
-
-    fn print_sim_info(&self) -> () {
-        println!("Particle count: {}", self.sim_info.particle_count);
-        println!(
-            "Move made last frame: {}",
-            self.sim_info.moves_made_last_frame
-        );
     }
 
     fn get_neighborhood(&self, offset: Offset) -> Neighborhood {
