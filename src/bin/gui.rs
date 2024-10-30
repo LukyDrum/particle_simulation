@@ -79,7 +79,7 @@ impl eframe::App for GUIParticleSim {
             // Draw pixels to texture
             self.texture.set(
                 egui::ColorImage {
-                    size: [SIM_WIDTH, SIM_HEIGHT],
+                    size: [self.simulation.width(), self.simulation.height()],
                     pixels,
                 },
                 egui::TextureOptions::NEAREST,
@@ -88,7 +88,7 @@ impl eframe::App for GUIParticleSim {
             // Add UI elements
             ui.add(egui::Label::new("Particle Simulation"));
 
-            // Paint the texture to rect
+            // Paint the texture to ui
             let size = self.texture.size_vec2();
             let sized_texture = egui::load::SizedTexture::new(self.texture.id(), size);
             let img = egui::Image::new(sized_texture);
