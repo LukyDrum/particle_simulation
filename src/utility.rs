@@ -4,7 +4,7 @@ use rand::{distributions::uniform::SampleUniform, thread_rng, Rng};
 
 use crate::offset::Offset;
 
-pub fn get_offsets_for_square(center: &Offset, size: usize) -> Vec<Offset> {
+pub fn get_offsets_for_square(center: &Offset, size: u32) -> Vec<Offset> {
     let size_half = (size / 2) as i32;
 
     let mut offsets = Vec::new();

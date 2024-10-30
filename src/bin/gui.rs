@@ -4,6 +4,7 @@
 use eframe::egui;
 use particle_simulation::{
     particles::{Fly, Mud, Oil, Particle, Rock, Sand, Smoke, Spark, Vapor, Water, Wood},
+    utility::get_offsets_for_square,
     Color, Offset, Simulation,
 };
 
@@ -33,6 +34,8 @@ struct GUIParticleSim {
     /// Preview of each particle type
     preview_particles: Vec<Box<dyn Particle>>,
     selected_particle_index: usize,
+    /// The resulting are will be this value squared
+    brush_size: u32,
 }
 
 impl GUIParticleSim {
@@ -52,6 +55,7 @@ impl GUIParticleSim {
             Smoke::new,
             Vapor::new,
         ];
+        // Create preview particles by mapping the new functions
         let preview_particles = particles_new_functions.iter().map(|f| f()).collect();
 
         GUIParticleSim {
@@ -65,6 +69,7 @@ impl GUIParticleSim {
             particles_new_functions,
             preview_particles,
             selected_particle_index: 0,
+            brush_size: 4,
         }
     }
 }
@@ -82,11 +87,19 @@ impl eframe::App for GUIParticleSim {
                     let pos = input.pointer.interact_pos().unwrap();
                     // Check if it is inside the RECT
                     if self.view_rect.contains(pos) {
-                        let pos_in_view = pos - self.view_rect.left_top();
-                        self.simulation.add_particle(
-                            &Offset::new(pos_in_view.x as i32, pos_in_view.y as i32),
-                            self.particles_new_functions[self.selected_particle_index](), // Call the new function of the currently selected particle
+                        let pos_relative_to_view = pos - self.view_rect.left_top();
+                        let center = Offset::new(
+                            pos_relative_to_view.x as i32,
+                            pos_relative_to_view.y as i32,
                         );
+
+                        // Spawn particles in a square around the center with length of side equal to brush_size
+                        for off in get_offsets_for_square(&center, self.brush_size) {
+                            self.simulation.add_particle(
+                                &off,
+                                self.particles_new_functions[self.selected_particle_index](), // Call the new function of the currently selected particle
+                            );
+                        }
                     }
                 }
             });
