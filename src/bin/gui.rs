@@ -6,6 +6,7 @@ use particle_simulation::{particles::Sand, Color, Offset, Simulation};
 
 const SIM_WIDTH: usize = 200;
 const SIM_HEIGHT: usize = 200;
+const ZOOM: f32 = 4.0;
 
 fn color_to_color32(c: &Color) -> egui::Color32 {
     egui::Color32::from_rgba_unmultiplied(c.r, c.g, c.b, c.a)
@@ -32,10 +33,10 @@ impl GUIParticleSim {
 
         GUIParticleSim {
             simulation,
-            pixels: vec![egui::Color32::from_rgb(0, 0, 0); 200 * 200],
+            pixels: vec![egui::Color32::from_rgb(0, 0, 0); SIM_WIDTH * SIM_HEIGHT],
             texture: cc.egui_ctx.load_texture(
                 "sim_view",
-                egui::ColorImage::new([200, 200], egui::Color32::from_rgb(0, 0, 0)),
+                egui::ColorImage::new([SIM_WIDTH, SIM_HEIGHT], egui::Color32::from_rgb(0, 0, 0)),
                 egui::TextureOptions::NEAREST,
             ),
         }
@@ -44,7 +45,7 @@ impl GUIParticleSim {
 
 impl eframe::App for GUIParticleSim {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        ctx.set_zoom_factor(2.0);
+        ctx.set_zoom_factor(ZOOM);
 
         egui::CentralPanel::default().show(ctx, |ui| {
             // Define a rect at a position with size
