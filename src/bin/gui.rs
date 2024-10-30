@@ -3,7 +3,7 @@
 
 use eframe::egui;
 use particle_simulation::{
-    particles::{Particle, Sand, Water},
+    particles::{Fly, Mud, Oil, Particle, Rock, Sand, Smoke, Spark, Vapor, Water, Wood},
     Color, Offset, Simulation,
 };
 
@@ -40,7 +40,18 @@ impl GUIParticleSim {
         let simulation = Simulation::new(SIM_WIDTH, SIM_HEIGHT);
 
         // Function to call to create a new particle of type
-        let particles_new_functions = vec![Sand::new, Water::new];
+        let particles_new_functions = vec![
+            Sand::new,
+            Water::new,
+            Rock::new,
+            Mud::new,
+            Oil::new,
+            Wood::new,
+            Spark::new,
+            Fly::new,
+            Smoke::new,
+            Vapor::new,
+        ];
         let preview_particles = particles_new_functions.iter().map(|f| f()).collect();
 
         GUIParticleSim {
