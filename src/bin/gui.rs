@@ -66,14 +66,14 @@ impl eframe::App for GUIParticleSim {
                 }
             });
 
-            let black = egui::Color32::from_rgb(0, 0, 0);
+            let bg = u32_to_color32(self.simulation.bg_color);
             for (i, opt) in self.simulation.particles_iter().enumerate() {
                 match opt {
                     Some(p) => {
                         self.pixels[i] = u32_to_color32(p.get_color());
                     }
                     None => {
-                        self.pixels[i] = black;
+                        self.pixels[i] = bg;
                     }
                 }
             }
