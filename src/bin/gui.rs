@@ -24,6 +24,7 @@ fn main() {
 struct GUIParticleSim {
     simulation: Simulation,
     texture: egui::TextureHandle,
+    view_rect: egui::Rect,
 }
 
 impl GUIParticleSim {
@@ -37,6 +38,7 @@ impl GUIParticleSim {
                 egui::ColorImage::new([SIM_WIDTH, SIM_HEIGHT], egui::Color32::from_rgb(0, 0, 0)),
                 egui::TextureOptions::NEAREST,
             ),
+            view_rect: egui::Rect::ZERO,
         }
     }
 }
@@ -46,26 +48,19 @@ impl eframe::App for GUIParticleSim {
         ctx.set_zoom_factor(ZOOM);
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            // Define a rect at a position with size
-            // This will hold the texture with the visual output of the simulation
-            let rect = egui::Rect::from_min_max(
-                egui::Pos2 { x: 0.0, y: 0.0 },
-                egui::Pos2 {
-                    x: SIM_WIDTH as f32,
-                    y: SIM_HEIGHT as f32,
-                },
-            );
-
-            // Check for button presses inside the rect
+            // Check for mouse presses inside the view rect
             ui.input(|input| {
                 // Check for left mouse button
                 if input.pointer.primary_down() {
                     // Get the position
                     let pos = input.pointer.interact_pos().unwrap();
                     // Check if it is inside the RECT
-                    if rect.contains(pos) {
-                        self.simulation
-                            .add_particle(&Offset::new(pos.x as i32, pos.y as i32), Sand::new());
+                    if self.view_rect.contains(pos) {
+                        let pos_in_view = pos - self.view_rect.left_top();
+                        self.simulation.add_particle(
+                            &Offset::new(pos_in_view.x as i32, pos_in_view.y as i32),
+                            Sand::new(),
+                        );
                     }
                 }
             });
@@ -90,10 +85,16 @@ impl eframe::App for GUIParticleSim {
                 egui::TextureOptions::NEAREST,
             );
 
+            // Add UI elements
+            ui.add(egui::Label::new("Particle Simulation"));
+
             // Paint the texture to rect
             let size = self.texture.size_vec2();
             let sized_texture = egui::load::SizedTexture::new(self.texture.id(), size);
-            egui::Image::new(sized_texture).paint_at(ui, rect);
+            let img = egui::Image::new(sized_texture);
+            let img_response = ui.add(img);
+            // Set the rect of the image as view rect
+            self.view_rect = img_response.rect;
         });
 
         // Step the simulation
