@@ -102,6 +102,25 @@ impl eframe::App for GUIParticleSim {
                         }
                     }
                 }
+
+                // Check for right mouse button
+                if input.pointer.secondary_down() {
+                    // Get the position
+                    let pos = input.pointer.interact_pos().unwrap();
+                    // Check if it is inside the RECT
+                    if self.view_rect.contains(pos) {
+                        let pos_relative_to_view = pos - self.view_rect.left_top();
+                        let center = Offset::new(
+                            pos_relative_to_view.x as i32,
+                            pos_relative_to_view.y as i32,
+                        );
+
+                        // Spawn particles in a square around the center with length of side equal to brush_size
+                        for off in get_offsets_for_square(&center, self.brush_size) {
+                            self.simulation.remove_particle(&off);
+                        }
+                    }
+                }
             });
 
             let bg = egui::Color32::LIGHT_BLUE;
