@@ -1,24 +1,24 @@
 use crate::particles::constants::*;
-use crate::particles::{get_near_color, Particle};
-use crate::Offset;
+use crate::particles::Particle;
+use crate::{Color, Offset};
 
 use super::properties::PropertyCheckResult;
 use super::{Burnability, Neighborhood, ParticleChange};
 
-const COLOR: u32 = 0xFF3D1812;
+const COLOR: u32 = 0x3D1812;
 const DENSITY: u8 = MAX_DENSITY;
 const BURNABILITY_TIME: u8 = 150;
 
 #[derive(Clone)]
 pub struct Wood {
-    color: u32,
+    color: Color,
     burnability: Burnability,
 }
 
 impl Wood {
     pub fn new() -> Box<dyn Particle> {
         Box::new(Wood {
-            color: get_near_color(COLOR),
+            color: Color::hex(COLOR).similiar(),
             burnability: Burnability::CanBurn,
         })
     }
@@ -29,8 +29,8 @@ impl Particle for Wood {
         "Wood"
     }
 
-    fn get_color(&self) -> u32 {
-        self.color
+    fn get_color(&self) -> &Color {
+        &self.color
     }
 
     fn get_density(&self) -> u8 {
@@ -65,7 +65,7 @@ impl Particle for Wood {
         match res {
             PropertyCheckResult::Updated => {
                 if let Burnability::IsBurning(_) = new_wood.get_burnability() {
-                    new_wood.color = get_near_color(FIRE_COLOR);
+                    new_wood.color = Color::hex(FIRE_COLOR).similiar();
                 }
 
                 ParticleChange::Changed(Some(Box::new(new_wood)))

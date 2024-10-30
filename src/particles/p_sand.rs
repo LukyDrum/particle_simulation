@@ -1,17 +1,17 @@
 use fastrand;
 
+use crate::particles::Particle;
 use crate::particles::{constants::*, NeighborCell};
-use crate::particles::{get_near_color, Particle};
-use crate::Offset;
+use crate::{Color, Offset};
 
 use super::{Neighborhood, ParticleChange};
 
-const COLOR: u32 = 0xFFE0E02D;
+const COLOR: u32 = 0xE0E02D;
 
 #[derive(Clone)]
 pub struct Sand {
     velocity: f32,
-    color: u32,
+    color: Color,
     movement: Offset,
 }
 
@@ -19,15 +19,7 @@ impl Sand {
     pub fn new() -> Box<dyn Particle> {
         Box::new(Sand {
             velocity: DEFAULT_VELOCITY,
-            color: get_near_color(COLOR),
-            movement: Offset::new(0, 1),
-        })
-    }
-
-    pub fn with_color(color: u32) -> Box<dyn Particle> {
-        Box::new(Sand {
-            velocity: DEFAULT_VELOCITY,
-            color: get_near_color(color),
+            color: Color::hex(COLOR).similiar(),
             movement: Offset::new(0, 1),
         })
     }
@@ -38,8 +30,8 @@ impl Particle for Sand {
         "Sand"
     }
 
-    fn get_color(&self) -> u32 {
-        self.color
+    fn get_color(&self) -> &Color {
+        &self.color
     }
 
     fn get_density(&self) -> u8 {

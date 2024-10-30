@@ -1,8 +1,7 @@
-use rand::random;
-
 use crate::particles::{NeighborCell, Neighborhood, Particle};
 
 use super::PropertyCheckResult;
+use fastrand;
 
 /// Describes how does the particle burn.
 #[derive(Clone, Copy)]
@@ -78,7 +77,7 @@ impl Burnability {
             Burnability::CanBurn => {
                 let lower_bound = if check_antiburn { antiburn_count } else { 0 };
 
-                if burning_count > lower_bound && random() {
+                if burning_count > lower_bound && fastrand::bool() {
                     particle.set_burnability(Burnability::IsBurning(default_burn_time));
                     updated = true;
                 }

@@ -2,23 +2,9 @@ use std::ops::{Add, Sub};
 
 use rand::{distributions::uniform::SampleUniform, thread_rng, Rng};
 
-use crate::{frame::Frame, offset::Offset, particles::Particle};
+use crate::offset::Offset;
 
-pub fn draw_ui_to_frame(
-    frame: &mut Frame,
-    current_particle: &Box<dyn Particle>,
-    indicator_size: usize,
-) {
-    for offset in get_offsets_for_square(&Offset::new(5, 5), indicator_size) {
-        let _ = frame.draw_pixel(
-            offset.x as usize,
-            offset.y as usize,
-            current_particle.get_color(),
-        );
-    }
-}
-
-pub fn get_offsets_for_square(center: &Offset, size: usize) -> Vec<Offset> {
+pub fn get_offsets_for_square(center: &Offset, size: u32) -> Vec<Offset> {
     let size_half = (size / 2) as i32;
 
     let mut offsets = Vec::new();

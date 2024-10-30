@@ -1,10 +1,10 @@
-use crate::particles::{get_near_color, NeighborCell, Particle};
+use crate::particles::{NeighborCell, Particle};
 use crate::utility::get_value_around;
-use crate::Offset;
+use crate::{Color, Offset};
 
 use super::ParticleChange;
 
-const COLOR: u32 = 0xFFB1B6BD;
+const COLOR: u32 = 0xB1B6BD;
 const DENSITY: u8 = 20;
 /// Default lifetime in number of updates
 const DEFAULT_LIFETIME: u32 = 750;
@@ -12,7 +12,7 @@ const LIFETIME_OFF: u32 = 300;
 
 #[derive(Clone)]
 pub struct Smoke {
-    color: u32,
+    color: Color,
     lifetime: u32,
     movement: Offset,
 }
@@ -20,7 +20,7 @@ pub struct Smoke {
 impl Smoke {
     pub fn new() -> Box<dyn Particle> {
         Box::new(Smoke {
-            color: get_near_color(COLOR),
+            color: Color::hex(COLOR).similiar(),
             lifetime: get_value_around(DEFAULT_LIFETIME, LIFETIME_OFF),
             movement: Offset::zero(),
         })
@@ -32,8 +32,8 @@ impl Particle for Smoke {
         "Smoke"
     }
 
-    fn get_color(&self) -> u32 {
-        self.color
+    fn get_color(&self) -> &Color {
+        &self.color
     }
 
     fn get_density(&self) -> u8 {
