@@ -2,7 +2,10 @@
 // Source: https://github.com/bluurryy/noise-functions-demo/blob/main/src/app.rs
 
 use eframe::egui;
-use particle_simulation::{particles::Sand, Color, Offset, Simulation};
+use particle_simulation::{
+    particles::{Particle, Sand, Water},
+    Color, Offset, Simulation,
+};
 
 const SIM_WIDTH: usize = 200;
 const SIM_HEIGHT: usize = 200;
@@ -25,11 +28,19 @@ struct GUIParticleSim {
     simulation: Simulation,
     texture: egui::TextureHandle,
     view_rect: egui::Rect,
+    /// Function to call to create a new particle of type
+    particles_new_functions: Vec<fn() -> Box<dyn Particle>>,
+    /// Preview of each particle type
+    preview_particles: Vec<Box<dyn Particle>>,
 }
 
 impl GUIParticleSim {
     fn new(cc: &eframe::CreationContext<'_>) -> Self {
         let simulation = Simulation::new(SIM_WIDTH, SIM_HEIGHT);
+
+        // Function to call to create a new particle of type
+        let particles_new_functions = vec![Sand::new, Water::new];
+        let preview_particles = particles_new_functions.iter().map(|f| f()).collect();
 
         GUIParticleSim {
             simulation,
@@ -39,6 +50,8 @@ impl GUIParticleSim {
                 egui::TextureOptions::NEAREST,
             ),
             view_rect: egui::Rect::ZERO,
+            particles_new_functions,
+            preview_particles,
         }
     }
 }
@@ -85,8 +98,16 @@ impl eframe::App for GUIParticleSim {
                 egui::TextureOptions::NEAREST,
             );
 
-            // Add UI elements
+            // UI ELEMENTS
+
+            // Add label
             ui.add(egui::Label::new("Particle Simulation"));
+
+            // Add particle buttons
+            for preview in &self.preview_particles {
+                let button = egui::Button::new(preview.get_name());
+                ui.add(button);
+            }
 
             // Paint the texture to ui
             let size = self.texture.size_vec2();
