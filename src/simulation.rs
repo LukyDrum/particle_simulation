@@ -1,5 +1,5 @@
 use dyn_clone::clone_box;
-use rand::Rng;
+use fastrand;
 use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use rustc_hash::FxHashMap;
 use std::collections::LinkedList;
@@ -245,7 +245,7 @@ impl Simulation {
         for (to, move_vec) in self.moves.iter() {
             let to = *to;
 
-            let rand_index = rand::thread_rng().gen_range(0..move_vec.len());
+            let rand_index = fastrand::usize(0..move_vec.len());
             let chosen_move = move_vec[rand_index];
 
             match chosen_move {

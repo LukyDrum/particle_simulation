@@ -1,10 +1,8 @@
-use rand::seq::SliceRandom;
-use rand::thread_rng;
-
 use crate::particles::Particle;
 use crate::particles::{constants::*, NeighborCell};
 use crate::utility::get_value_around;
 use crate::{Color, Offset};
+use fastrand;
 
 use super::properties::PropertyCheckResult;
 use super::{Burnability, Neighborhood, ParticleChange};
@@ -76,7 +74,7 @@ impl Particle for Spark {
         // Find new movement
         // Shuffle indexes
         let mut indexes: Vec<usize> = (0..OFFSETS.len()).collect();
-        indexes.shuffle(&mut thread_rng());
+        fastrand::shuffle(indexes.as_mut_slice());
         // Loop over offsets indexed by shuffled
         for_else!(
             for index in indexes => {
