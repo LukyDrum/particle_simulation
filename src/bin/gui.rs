@@ -131,6 +131,7 @@ impl eframe::App for GUIParticleSim {
 
             // Make 2 columns, one for simulation view, second for buttons
             ui.columns(2, |cols| {
+                // COLUMN 0
                 // Paint the texture to ui
                 let size = self.texture.size_vec2();
                 let sized_texture = egui::load::SizedTexture::new(self.texture.id(), size);
@@ -138,6 +139,13 @@ impl eframe::App for GUIParticleSim {
                 let img_response = cols[0].add(img);
                 // Set the rect of the image as view rect
                 self.view_rect = img_response.rect;
+
+                // COLUMN 1
+                // Add brush size slider
+                cols[1].add(egui::Slider::new(&mut self.brush_size, 1..=20).text("Brush size"));
+
+                // Add label for particles
+                cols[1].add(egui::Label::new("Particles"));
 
                 // Add particle buttons
                 for (index, preview) in self.preview_particles.iter().enumerate() {
