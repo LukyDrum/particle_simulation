@@ -10,7 +10,7 @@ use crate::{
     sprite::Sprite,
 };
 
-struct SimInfo {
+pub struct SimInfo {
     pub particle_count: u32,
     pub moves_made_last_frame: u32,
 }
@@ -141,6 +141,18 @@ impl Simulation {
             // Add particle into simulation
             self.add_particle(&p_offset, translate_fn(color));
         }
+    }
+
+    pub fn width(&self) -> usize {
+        self.width
+    }
+
+    pub fn height(&self) -> usize {
+        self.height
+    }
+
+    pub fn info(&self) -> &SimInfo {
+        &self.sim_info
     }
 }
 
