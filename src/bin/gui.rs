@@ -9,7 +9,7 @@ use particle_simulation::{
 
 const SIM_WIDTH: usize = 200;
 const SIM_HEIGHT: usize = 200;
-const ZOOM: f32 = 4.0;
+const ZOOM: f32 = 3.0;
 
 fn color_to_color32(c: &Color) -> egui::Color32 {
     egui::Color32::from_rgba_unmultiplied(c.r, c.g, c.b, c.a)
@@ -32,6 +32,7 @@ struct GUIParticleSim {
     particles_new_functions: Vec<fn() -> Box<dyn Particle>>,
     /// Preview of each particle type
     preview_particles: Vec<Box<dyn Particle>>,
+    selected_particle_index: usize,
 }
 
 impl GUIParticleSim {
@@ -52,6 +53,7 @@ impl GUIParticleSim {
             view_rect: egui::Rect::ZERO,
             particles_new_functions,
             preview_particles,
+            selected_particle_index: 0,
         }
     }
 }
@@ -72,7 +74,7 @@ impl eframe::App for GUIParticleSim {
                         let pos_in_view = pos - self.view_rect.left_top();
                         self.simulation.add_particle(
                             &Offset::new(pos_in_view.x as i32, pos_in_view.y as i32),
-                            Sand::new(),
+                            self.particles_new_functions[self.selected_particle_index](), // Call the new function of the currently selected particle
                         );
                     }
                 }
@@ -103,19 +105,26 @@ impl eframe::App for GUIParticleSim {
             // Add label
             ui.add(egui::Label::new("Particle Simulation"));
 
-            // Add particle buttons
-            for preview in &self.preview_particles {
-                let button = egui::Button::new(preview.get_name());
-                ui.add(button);
-            }
+            // Make 2 columns, one for simulation view, second for buttons
+            ui.columns(2, |cols| {
+                // Paint the texture to ui
+                let size = self.texture.size_vec2();
+                let sized_texture = egui::load::SizedTexture::new(self.texture.id(), size);
+                let img = egui::Image::new(sized_texture);
+                let img_response = cols[0].add(img);
+                // Set the rect of the image as view rect
+                self.view_rect = img_response.rect;
 
-            // Paint the texture to ui
-            let size = self.texture.size_vec2();
-            let sized_texture = egui::load::SizedTexture::new(self.texture.id(), size);
-            let img = egui::Image::new(sized_texture);
-            let img_response = ui.add(img);
-            // Set the rect of the image as view rect
-            self.view_rect = img_response.rect;
+                // Add particle buttons
+                for (index, preview) in self.preview_particles.iter().enumerate() {
+                    let button = egui::Button::new(preview.get_name());
+                    let response = cols[1].add(button);
+                    // If clicked, set the selected particle index
+                    if response.clicked() {
+                        self.selected_particle_index = index;
+                    }
+                }
+            });
         });
 
         // Step the simulation
