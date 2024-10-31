@@ -51,10 +51,6 @@ impl Particle for Oil {
         true
     }
 
-    fn is_solid(&self) -> bool {
-        false
-    }
-
     fn get_burnability(&self) -> Burnability {
         self.burnability
     }

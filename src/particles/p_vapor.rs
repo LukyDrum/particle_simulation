@@ -44,10 +44,6 @@ impl Particle for Vapor {
         true
     }
 
-    fn is_solid(&self) -> bool {
-        false
-    }
-
     fn get_movement(&self) -> Offset {
         self.movement
     }

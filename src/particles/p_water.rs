@@ -50,10 +50,6 @@ impl Particle for Water {
         true
     }
 
-    fn is_solid(&self) -> bool {
-        false
-    }
-
     fn get_burnability(&self) -> Burnability {
         Burnability::AntiBurn
     }

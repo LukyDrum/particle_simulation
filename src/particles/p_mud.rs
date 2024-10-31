@@ -50,10 +50,6 @@ impl Particle for Mud {
         true
     }
 
-    fn is_solid(&self) -> bool {
-        true
-    }
-
     fn get_movement(&self) -> Offset {
         self.movement * self.velocity as i32
     }

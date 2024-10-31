@@ -68,10 +68,6 @@ impl Particle for Fly {
         true
     }
 
-    fn is_solid(&self) -> bool {
-        true
-    }
-
     fn get_burnability(&self) -> Burnability {
         self.burnability
     }

@@ -35,10 +35,6 @@ impl Particle for Rock {
         false
     }
 
-    fn is_solid(&self) -> bool {
-        true
-    }
-
     fn get_movement(&self) -> Offset {
         Offset::zero()
     }

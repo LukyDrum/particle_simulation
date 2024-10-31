@@ -1,5 +1,6 @@
 use dyn_clone::DynClone;
 
+use super::constants::MAX_DENSITY;
 use super::{constants::DEFAULT_VELOCITY, Burnability, Neighborhood};
 use crate::offset::Offset;
 use crate::Color;
@@ -53,7 +54,9 @@ pub trait Particle: Send + Sync + DynClone {
     fn is_moveable(&self) -> bool;
 
     /// Returns true if the particle is completly solid (Example: rock).
-    fn is_solid(&self) -> bool;
+    fn is_solid(&self) -> bool {
+        self.get_density() == MAX_DENSITY
+    }
 
     /// Checks if `self` can switch with `other`.
     /// This is the default implementation, can be overriden for custom behavior.

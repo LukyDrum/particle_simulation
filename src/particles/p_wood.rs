@@ -41,10 +41,6 @@ impl Particle for Wood {
         false
     }
 
-    fn is_solid(&self) -> bool {
-        true
-    }
-
     fn get_burnability(&self) -> Burnability {
         self.burnability
     }
