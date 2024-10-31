@@ -166,15 +166,26 @@ impl eframe::App for GUIParticleSim {
                 // Add label for particles
                 cols[1].add(egui::Label::new("Particles"));
 
-                // Add particle buttons
-                for (index, preview) in self.preview_particles.iter().enumerate() {
-                    let button = egui::Button::new(preview.get_name());
-                    let response = cols[1].add(button);
-                    // If clicked, set the selected particle index
-                    if response.clicked() {
-                        self.selected_particle_index = index;
+                egui::Grid::new("Particle buttons grid").show(&mut cols[1], |ui_col| {
+                    let mut counter = 0;
+                    // Add particle buttons
+                    for (index, preview) in self.preview_particles.iter().enumerate() {
+                        let button = egui::Button::new(preview.get_name())
+                            .fill(color_to_color32(preview.get_color()))
+                            .selected(index == self.selected_particle_index);
+                        let response = ui_col.add(button);
+                        // If clicked, set the selected particle index
+                        if response.clicked() {
+                            self.selected_particle_index = index;
+                        }
+
+                        // Increase counter and potentialy add end row
+                        counter += 1;
+                        if counter % 2 == 0 {
+                            ui_col.end_row();
+                        }
                     }
-                }
+                });
             });
         });
 
