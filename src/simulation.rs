@@ -6,8 +6,9 @@ use std::collections::LinkedList;
 
 use crate::{
     offset::Offset,
-    particles::{NeighborCell, Neighborhood, Particle, ParticleChange},
+    particles::{Particle, ParticleChange},
     sprite::Sprite,
+    Cell, Neighborhood,
 };
 
 pub struct SimInfo {
@@ -376,7 +377,7 @@ impl Simulation {
     }
 
     fn get_neighborhood(&self, offset: Offset) -> Neighborhood {
-        let mut neigh: Neighborhood = Neighborhood(vec![vec![NeighborCell::Outside; 3]; 3]);
+        let mut neigh: Neighborhood = Neighborhood(vec![vec![&Cell::Outside; 3]; 3]);
 
         for row_off in -1..=1 {
             for col_off in -1..=1 {
@@ -385,7 +386,7 @@ impl Simulation {
                 let col = (col_off + 1) as usize;
 
                 if self.is_within(&new_offset) {
-                    neigh.0[row][col] = NeighborCell::Inside(self.get_particle(&new_offset));
+                    neigh.0[row][col] = &Cell::Inside(self.get_particle(&new_offset).clone());
                 }
             }
         }

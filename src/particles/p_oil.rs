@@ -1,9 +1,11 @@
+use crate::particles::constants::*;
 use crate::particles::Particle;
-use crate::particles::{constants::*, NeighborCell};
+use crate::Cell;
+use crate::Neighborhood;
 use crate::{Color, Offset};
 
 use super::properties::PropertyCheckResult;
-use super::{Burnability, Neighborhood, ParticleChange, Smoke};
+use super::{Burnability, ParticleChange, Smoke};
 
 const COLOR: u32 = 0x996E17;
 const DENSITY: u8 = 120;
@@ -81,7 +83,7 @@ impl Particle for Oil {
         // Find new movement
         for_else!(
             for off in [Offset::new(0, 1), Offset::new(new_oil.x_dir, 0), Offset::new(-new_oil.x_dir, 0)] => {
-                if let NeighborCell::Inside(opt) = neigborhood.on_relative(&off) {
+                if let Cell::Inside(opt) = neigborhood.on_relative(&off) {
                     match opt {
                         None => {
                             new_oil.movement = off;

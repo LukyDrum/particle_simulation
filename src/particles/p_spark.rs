@@ -1,11 +1,13 @@
+use crate::particles::constants::*;
 use crate::particles::Particle;
-use crate::particles::{constants::*, NeighborCell};
 use crate::utility::get_value_around;
+use crate::Cell;
+use crate::Neighborhood;
 use crate::{Color, Offset};
 use fastrand;
 
 use super::properties::PropertyCheckResult;
-use super::{Burnability, Neighborhood, ParticleChange};
+use super::{Burnability, ParticleChange};
 
 const COLOR: u32 = FIRE_COLOR;
 /// Default lifetime in number of updates
@@ -75,7 +77,7 @@ impl Particle for Spark {
         for_else!(
             for index in indexes => {
                 let off = OFFSETS[index];
-                if let NeighborCell::Inside(opt) = neigborhood.on_relative(&off) {
+                if let Cell::Inside(opt) = neigborhood.on_relative(&off) {
                     match opt {
                         None => {
                             new_spark.movement = off;

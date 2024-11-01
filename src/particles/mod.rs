@@ -1,5 +1,4 @@
 pub mod constants;
-mod neighborhood;
 mod p_fly;
 mod p_mud;
 mod p_oil;
@@ -14,7 +13,6 @@ mod particle;
 /// Various properties that a particle may inhibit.
 mod properties;
 
-pub use neighborhood::{NeighborCell, Neighborhood};
 pub use p_fly::Fly;
 pub use p_mud::Mud;
 pub use p_oil::Oil;

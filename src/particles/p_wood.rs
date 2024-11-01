@@ -1,9 +1,10 @@
 use crate::particles::constants::*;
 use crate::particles::Particle;
+use crate::Neighborhood;
 use crate::{Color, Offset};
 
 use super::properties::PropertyCheckResult;
-use super::{Burnability, Neighborhood, ParticleChange};
+use super::{Burnability, ParticleChange};
 
 const COLOR: u32 = 0x3D1812;
 const DENSITY: u8 = MAX_DENSITY;

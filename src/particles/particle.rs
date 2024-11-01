@@ -1,9 +1,10 @@
 use dyn_clone::DynClone;
 
 use super::constants::MAX_DENSITY;
-use super::{constants::DEFAULT_VELOCITY, Burnability, Neighborhood};
+use super::{constants::DEFAULT_VELOCITY, Burnability};
 use crate::offset::Offset;
 use crate::Color;
+use crate::Neighborhood;
 
 /// Similiar to Option.
 /// Contains information if the particle has changed or not.

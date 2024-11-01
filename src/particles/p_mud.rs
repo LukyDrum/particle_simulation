@@ -1,6 +1,8 @@
+use crate::particles::constants::*;
 use crate::particles::Particle;
-use crate::particles::{constants::*, NeighborCell};
 use crate::utility::get_value_around;
+use crate::Cell;
+use crate::Neighborhood;
 use crate::{Color, Offset};
 
 use super::ParticleChange;
@@ -54,18 +56,18 @@ impl Particle for Mud {
         self.movement * self.velocity as i32
     }
 
-    fn update(&self, neigborhood: super::Neighborhood) -> ParticleChange {
+    fn update(&self, neigborhood: Neighborhood) -> ParticleChange {
         let mut new_mud = self.clone();
 
         // Empty cell bellow or full but can switch
         match neigborhood.down() {
-            NeighborCell::Inside(None) => {
+            Cell::Inside(None) => {
                 new_mud.movement = Offset::new(0, 1);
                 new_mud.velocity = MAX_VELOCITY.min(new_mud.velocity + GRAVITY);
 
                 return ParticleChange::Changed(Some(Box::new(new_mud)));
             }
-            NeighborCell::Inside(Some(other)) => {
+            Cell::Inside(Some(other)) => {
                 if new_mud.can_switch_with(other) {
                     new_mud.movement = Offset::new(0, 1);
                     // Apply some slowdown as if by friction of switching
@@ -89,7 +91,7 @@ impl Particle for Mud {
         let rand_x = if fastrand::bool() { 1 } else { -1 };
         for_else!(
             for off in [Offset::new(-rand_x, 1), Offset::new(rand_x, 1)] => {
-                if let NeighborCell::Inside(opt) = neigborhood.on_relative(&off) {
+                if let Cell::Inside(opt) = neigborhood.on_relative(&off) {
                     match opt {
                         None => {
                             new_mud.movement = off;

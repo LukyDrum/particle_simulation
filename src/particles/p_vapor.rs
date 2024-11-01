@@ -1,6 +1,6 @@
-use crate::particles::{NeighborCell, Particle};
+use crate::particles::Particle;
 use crate::utility::get_value_around;
-use crate::{Color, Offset};
+use crate::{Cell, Color, Neighborhood, Offset};
 
 use super::{ParticleChange, Water};
 
@@ -48,7 +48,7 @@ impl Particle for Vapor {
         self.movement
     }
 
-    fn update(&self, neigborhood: super::Neighborhood) -> ParticleChange {
+    fn update(&self, neigborhood: Neighborhood) -> ParticleChange {
         // Lifetime reached 0 => vapor condenses to water
         if self.lifetime == 0 {
             return ParticleChange::Changed(Some(Water::new()));
@@ -62,7 +62,7 @@ impl Particle for Vapor {
         // Find new movement
         for_else!(
             for off in [Offset::new(0, -1), Offset::new(x_dir, 0), Offset::new(-x_dir, 0)] => {
-                if let NeighborCell::Inside(opt) = neigborhood.on_relative(&off) {
+                if let Cell::Inside(opt) = neigborhood.on_relative(&off) {
                     match opt {
                         None => {
                             new_vapor.movement = off;

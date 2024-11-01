@@ -1,11 +1,11 @@
 use fastrand;
 
 use crate::particles::Particle;
-use crate::particles::{constants::*, NeighborCell, Vapor};
-use crate::{Color, Offset};
+use crate::particles::{constants::*, Vapor};
+use crate::{Cell, Color, Neighborhood, Offset};
 
 // use super::{Burnability, Neighborhood, ParticleChange, Vapor};
-use super::{Burnability, Neighborhood, ParticleChange};
+use super::{Burnability, ParticleChange};
 
 const COLOR: u32 = 0x326ECF;
 const DENSITY: u8 = 128;
@@ -73,7 +73,7 @@ impl Particle for Water {
         // Find new movement
         for_else!(
             for off in [Offset::new(0, 1), Offset::new(new_water.x_dir, 0), Offset::new(-new_water.x_dir, 0)] => {
-                if let NeighborCell::Inside(opt) = neigborhood.on_relative(&off) {
+                if let Cell::Inside(opt) = neigborhood.on_relative(&off) {
                     match opt {
                         None => {
                             new_water.movement = off;
@@ -102,7 +102,7 @@ impl Particle for Water {
         // Check number of neighbors that are IsBurning and AntiBurn
         let mut count = 0;
         for opt in neigborhood.iter() {
-            if let NeighborCell::Inside(Some(neigh)) = opt {
+            if let Cell::Inside(Some(neigh)) = opt {
                 match neigh.get_burnability() {
                     Burnability::IsBurning(_) => count += 1,
                     Burnability::AntiBurn => count -= 1,
