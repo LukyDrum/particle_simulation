@@ -1,50 +1,38 @@
 use crate::particles::Particle;
 
-/// Represents a cell in the Neighborhood. Can be either `Inside` with an Option of a particle, or `Outside` = outside of the grid of simulation.
-#[derive(Clone)]
-pub enum Cell {
-    Inside(Option<Box<dyn Particle>>),
-    Outside,
+pub struct Cell {
+    particle: Option<Box<dyn Particle>>,
+    pressure: i32,
 }
 
 impl Cell {
-    /// Returns true if `self` is `Inside`.
-    pub fn is_inside(&self) -> bool {
-        match self {
-            Cell::Inside(_) => true,
-            Cell::Outside => false,
+    pub fn empty() -> Self {
+        Cell {
+            particle: None,
+            pressure: 0,
         }
     }
 
-    /// Returns true if `self` is `Outside`.
-    pub fn is_outside(&self) -> bool {
-        match self {
-            Cell::Outside => true,
-            Cell::Inside(_) => false,
+    pub fn is_empty(&self) -> bool {
+        match self.particle {
+            Some(_) => false,
+            None => true,
         }
     }
 
-    /// Returns true if `self` is `Inside` and contains an Option with Some.
-    pub fn is_some(&self) -> bool {
-        if let Cell::Inside(opt) = self {
-            match opt {
-                Some(_) => true,
-                None => false,
-            }
-        } else {
-            false
-        }
+    pub fn get_particle(&self) -> &Option<Box<dyn Particle>> {
+        &self.particle
     }
 
-    /// Returns true if `self` is `Inside` and contains an Option with None.
-    pub fn is_none(&self) -> bool {
-        if let Cell::Inside(opt) = self {
-            match opt {
-                None => true,
-                Some(_) => false,
-            }
-        } else {
-            false
-        }
+    pub fn set_particle(&mut self, new_particle: Box<dyn Particle>) -> () {
+        self.particle = Some(new_particle)
+    }
+
+    pub fn get_pressure(&self) -> i32 {
+        self.pressure
+    }
+
+    pub fn set_pressure(&mut self, new_pressure: i32) -> () {
+        self.pressure = new_pressure
     }
 }
