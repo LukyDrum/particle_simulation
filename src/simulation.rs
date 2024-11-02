@@ -416,6 +416,22 @@ impl Simulation {
                     }
                 }
 
+                // Look left
+                if let Some(cell) = self.get_cell(&(offset + LEFT)) {
+                    if !cell.is_empty() {
+                        // Set the pressure to the max of this and neighbor cell
+                        new_pressure = new_pressure.max(cell.get_pressure());
+                    }
+                }
+
+                // Look right
+                if let Some(cell) = self.get_cell(&(offset + RIGHT)) {
+                    if !cell.is_empty() {
+                        // Set the pressure to the max of this and neighbor cell
+                        new_pressure = new_pressure.max(cell.get_pressure());
+                    }
+                }
+
                 new_pressure
             })
             .collect();
