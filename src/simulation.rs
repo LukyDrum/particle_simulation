@@ -120,6 +120,8 @@ impl Simulation {
 
         self.clear_moves();
 
+        self.calculate_pressure();
+
         // Update inner state of particles
         self.update_inner_states();
     }
@@ -393,25 +395,34 @@ impl Simulation {
     }
 
     fn calculate_pressure(&mut self) -> () {
-        let new_pressures = self.cells.iter().enumerate().map(|(index, cell)| {
-            // Reset pressure for empty cells
-            if cell.is_empty() {
-                return Cell::default_pressure();
-            }
-
-            let offset = index_to_offset(self.width, index);
-
-            let mut new_pressure = Cell::default_pressure();
-            // Look up
-            if let Some(cell) = self.get_cell(&(offset + UP)) {
-                if !cell.is_empty() {
-                    // Set new pressure to 1 greater than the one above me
-                    new_pressure = cell.get_pressure() + 1;
+        let new_pressures: LinkedList<i32> = self
+            .cells
+            .iter()
+            .enumerate()
+            .map(|(index, cell)| {
+                // Reset pressure for empty cells
+                if cell.is_empty() {
+                    return Cell::default_pressure();
                 }
-            }
 
-            new_pressure
-        });
+                let offset = index_to_offset(self.width, index);
+
+                let mut new_pressure = Cell::default_pressure();
+                // Look up
+                if let Some(cell) = self.get_cell(&(offset + UP)) {
+                    if !cell.is_empty() {
+                        // Set new pressure to 1 greater than the one above me
+                        new_pressure = cell.get_pressure() + 1;
+                    }
+                }
+
+                new_pressure
+            })
+            .collect();
+
+        for (index, pressure) in new_pressures.iter().enumerate() {
+            self.cells[index].set_pressure(*pressure);
+        }
     }
 }
 
