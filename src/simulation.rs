@@ -397,7 +397,7 @@ impl Simulation {
     fn calculate_pressure(&mut self) -> () {
         let new_pressures: LinkedList<i32> = self
             .cells
-            .iter()
+            .par_iter()
             .enumerate()
             .map(|(index, cell)| {
                 // Reset pressure for empty cells
