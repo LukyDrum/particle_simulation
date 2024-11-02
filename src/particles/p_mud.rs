@@ -60,23 +60,24 @@ impl Particle for Mud {
         let mut new_mud = self.clone();
 
         // Empty cell bellow or full but can switch
-        match neigborhood.down() {
-            Cell::Inside(None) => {
-                new_mud.movement = Offset::new(0, 1);
-                new_mud.velocity = MAX_VELOCITY.min(new_mud.velocity + GRAVITY);
-
-                return ParticleChange::Changed(Some(Box::new(new_mud)));
-            }
-            Cell::Inside(Some(other)) => {
-                if new_mud.can_switch_with(other) {
+        if let Some(cell) = neigborhood.down() {
+            match cell.get_particle() {
+                None => {
                     new_mud.movement = Offset::new(0, 1);
-                    // Apply some slowdown as if by friction of switching
-                    new_mud.velocity = DEFAULT_VELOCITY.max(new_mud.velocity - SWITCH_SLOWDOWN);
+                    new_mud.velocity = MAX_VELOCITY.min(new_mud.velocity + GRAVITY);
 
                     return ParticleChange::Changed(Some(Box::new(new_mud)));
                 }
+                Some(other) => {
+                    if new_mud.can_switch_with(other) {
+                        new_mud.movement = Offset::new(0, 1);
+                        // Apply some slowdown as if by friction of switching
+                        new_mud.velocity = DEFAULT_VELOCITY.max(new_mud.velocity - SWITCH_SLOWDOWN);
+
+                        return ParticleChange::Changed(Some(Box::new(new_mud)));
+                    }
+                }
             }
-            _ => {}
         }
 
         // Cant fall to side yet
@@ -91,8 +92,8 @@ impl Particle for Mud {
         let rand_x = if fastrand::bool() { 1 } else { -1 };
         for_else!(
             for off in [Offset::new(-rand_x, 1), Offset::new(rand_x, 1)] => {
-                if let Cell::Inside(opt) = neigborhood.on_relative(&off) {
-                    match opt {
+                if let Some(cell) = neigborhood.on_relative(&off) {
+                    match cell.get_particle() {
                         None => {
                             new_mud.movement = off;
                             new_mud.velocity = MAX_VELOCITY.min(new_mud.velocity + GRAVITY);

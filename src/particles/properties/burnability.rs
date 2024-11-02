@@ -59,11 +59,13 @@ impl Burnability {
         let mut burning_count = 0;
         let mut antiburn_count = 0;
         for opt in neigborhood.iter() {
-            if let Cell::Inside(Some(neigh)) = opt {
-                match neigh.get_burnability() {
-                    Burnability::IsBurning(_) => burning_count += 1,
-                    Burnability::AntiBurn => antiburn_count += 1,
-                    _ => {}
+            if let Some(cell) = opt {
+                if let Some(neigh) = cell.get_particle() {
+                    match neigh.get_burnability() {
+                        Burnability::IsBurning(_) => burning_count += 1,
+                        Burnability::AntiBurn => antiburn_count += 1,
+                        _ => {}
+                    }
                 }
             }
         }

@@ -59,8 +59,8 @@ impl Particle for Sand {
         let rand_x = if fastrand::bool() { 1 } else { -1 };
         for_else!(
             for off in [Offset::new(0, 1), Offset::new(-rand_x, 1), Offset::new(rand_x, 1)] => {
-                if let Cell::Inside(opt) = neigborhood.on_relative(&off) {
-                    match opt {
+                if let Some(cell) = neigborhood.on_relative(&off) {
+                    match cell.get_particle() {
                         None => {
                             new_sand.movement = off;
                             // Check if the movement is down and apply gravity

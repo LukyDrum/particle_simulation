@@ -107,8 +107,8 @@ impl Particle for Fly {
             for_else!(
                 for index in indexes => {
                     let off = OFFSETS[index];
-                    if let Cell::Inside(opt) = neigborhood.on_relative(&off) {
-                        match opt {
+                    if let Some(cell) = neigborhood.on_relative(&off) {
+                        match cell.get_particle() {
                             None => {
                                 new_fly.movement = off;
                                 new_fly.focus = get_value_around(FOCUS_TIME, FOCUS_TIME_OFFSET);

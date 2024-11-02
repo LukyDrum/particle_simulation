@@ -34,7 +34,7 @@ enum SimMove {
 pub struct Simulation {
     width: usize,
     height: usize,
-    particles: Vec<Option<Box<dyn Particle>>>,
+    cells: Vec<Cell>,
     moves: FxHashMap<usize, Vec<SimMove>>, // Destination index, Moves to be done ending at that index
     sim_info: SimInfo,
 }
@@ -44,14 +44,14 @@ impl Simulation {
         Simulation {
             width,
             height,
-            particles: vec![None; width * height],
+            cells: vec![Cell::empty(); width * height],
             moves: FxHashMap::default(),
             sim_info: SimInfo::new(),
         }
     }
 
-    pub fn particles_iter(&self) -> std::slice::Iter<'_, Option<Box<dyn Particle>>> {
-        self.particles.iter()
+    pub fn cells_iter(&self) -> std::slice::Iter<'_, Cell> {
+        self.cells.iter()
     }
 
     pub fn add_particle(&mut self, offset: &Offset, particle: Box<dyn Particle>) -> bool {
@@ -60,8 +60,8 @@ impl Simulation {
         }
 
         let index = self.offset_to_index(offset);
-        if self.particles[index].is_none() {
-            self.particles[index] = Some(particle);
+        if self.cells[index].is_empty() {
+            self.cells[index].set_particle(particle);
 
             // Update Sim Info
             self.sim_info.particle_count += 1;
@@ -78,19 +78,15 @@ impl Simulation {
         }
 
         let index = self.offset_to_index(offset);
-        let opt = &self.particles[index];
+        let cell = &mut self.cells[index];
 
-        match opt {
-            None => return false,
-            Some(_) => {
-                self.particles[index] = None;
-
-                // Update Sim Info
-                self.sim_info.particle_count -= 1;
-
-                return true;
-            }
+        if cell.is_empty() {
+            return false;
         }
+
+        cell.remove_particle();
+
+        true
     }
 
     pub fn get_particle(&self, offset: &Offset) -> &Option<Box<dyn Particle>> {
@@ -98,7 +94,7 @@ impl Simulation {
             return &None;
         }
 
-        &self.particles[self.offset_to_index(offset)]
+        self.cells[self.offset_to_index(offset)].get_particle()
     }
 
     pub fn change_particle(&mut self, offset: &Offset, new_particle: Box<dyn Particle>) -> () {
@@ -107,7 +103,7 @@ impl Simulation {
         }
 
         let index = self.offset_to_index(offset);
-        self.particles[index] = Some(new_particle);
+        self.cells[index].set_particle(new_particle);
     }
 
     pub fn simulate_step(&mut self) -> () {
@@ -201,9 +197,9 @@ impl Simulation {
         // Look at the given range
         for i in start..end {
             // Get the possible particle
-            let opt = &self.particles[i];
+            let cell = &self.cells[i];
 
-            if let Some(p) = opt {
+            if let Some(p) = cell.get_particle() {
                 // If the particle is not moveable, we can just skip it
                 if !p.is_moveable() {
                     continue;
@@ -222,9 +218,10 @@ impl Simulation {
                 let new_offset = self.find_max_offset(p_offset, max_offset, p);
                 // Convert to index
                 let new_index = self.offset_to_index(&new_offset);
-                match self.particles[new_index] {
-                    None => moves_list.push_back((new_index, SimMove::Move(i))),
-                    Some(_) => moves_list.push_back((new_index, SimMove::Switch(i))),
+                if self.cells[new_index].is_empty() {
+                    moves_list.push_back((new_index, SimMove::Move(i)));
+                } else {
+                    moves_list.push_back((new_index, SimMove::Switch(i)));
                 }
             }
         }
@@ -252,34 +249,26 @@ impl Simulation {
             match chosen_move {
                 // Move to spot and increase velocity, as if by gravity
                 SimMove::Move(from) => {
-                    let opt = &self.particles[from];
+                    let cell = &self.cells[from];
 
-                    if let Some(p) = opt {
+                    if let Some(p) = cell.get_particle() {
                         let p = *clone_box(&*p);
                         // Move the particle
-                        self.particles[to] = Some(p);
+                        self.cells[to].set_particle(p);
                         // Free the old sport
-                        self.particles[from] = None;
+                        self.cells[from].remove_particle();
                     }
                 }
                 // Switch particles on "to" and "with"
                 SimMove::Switch(with) => {
-                    let opt_on_to = &self.particles[to];
-                    let opt_on_with = self.particles[with].clone();
+                    // Switch particles while keeping pressures
+                    let new_to_pressure = self.cells[with].get_pressure();
+                    let new_with_pressure = self.cells[to].get_pressure();
 
-                    if let Some(p) = opt_on_to {
-                        let p = *clone_box(&*p);
-                        self.particles[with] = Some(p);
-                    } else {
-                        self.particles[with] = None;
-                    }
+                    self.cells.swap(to, with);
 
-                    if let Some(p) = opt_on_with {
-                        let p = clone_box(&*p);
-                        self.particles[to] = Some(p);
-                    } else {
-                        self.particles[to] = None;
-                    }
+                    self.cells[to].set_pressure(new_to_pressure);
+                    self.cells[with].set_pressure(new_with_pressure);
                 }
             }
 
@@ -296,12 +285,12 @@ impl Simulation {
     /// Updates the inner state of each particle
     fn update_inner_states(&mut self) -> () {
         // Get new particles, meaning new states
-        let new_particles: Vec<(usize, Option<Box<dyn Particle>>)> = self
-            .particles
+        let new_particles: LinkedList<(usize, Option<Box<dyn Particle>>)> = self
+            .cells
             .par_iter()
             .enumerate()
-            .map(|(index, opt)| {
-                if let Some(p) = opt {
+            .map(|(index, cell)| {
+                if let Some(p) = cell.get_particle() {
                     let offset = self.index_to_offset(index);
                     let neigborhood: Neighborhood = self.get_neighborhood(offset);
                     let p_change = p.update(neigborhood);
@@ -321,7 +310,10 @@ impl Simulation {
             .collect();
 
         for (index, opt) in new_particles {
-            self.particles[index] = opt;
+            match opt {
+                Some(p) => self.cells[index].set_particle(p),
+                None => self.cells[index].remove_particle(),
+            }
         }
     }
 
@@ -345,9 +337,9 @@ impl Simulation {
             }
 
             let index = self.offset_to_index(&offset);
-            let opt = &self.particles[index];
+            let cell = &self.cells[index];
 
-            if let Some(other_p) = opt {
+            if let Some(other_p) = cell.get_particle() {
                 // If other_p does not have lower density, then we won't be able to switch
                 if !(particle.can_switch_with(other_p)) {
                     return offsets_between[i - 1];
@@ -377,7 +369,7 @@ impl Simulation {
     }
 
     fn get_neighborhood(&self, offset: Offset) -> Neighborhood {
-        let mut neigh: Neighborhood = Neighborhood(vec![vec![&Cell::Outside; 3]; 3]);
+        let mut neigh: Neighborhood = Neighborhood(vec![vec![None; 3]; 3]);
 
         for row_off in -1..=1 {
             for col_off in -1..=1 {
@@ -386,7 +378,8 @@ impl Simulation {
                 let col = (col_off + 1) as usize;
 
                 if self.is_within(&new_offset) {
-                    neigh.0[row][col] = &Cell::Inside(self.get_particle(&new_offset).clone());
+                    let index = self.offset_to_index(&new_offset);
+                    neigh.0[row][col] = Some(&self.cells[index]);
                 }
             }
         }

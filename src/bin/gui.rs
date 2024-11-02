@@ -127,8 +127,8 @@ impl eframe::App for GUIParticleSim {
             // Map particles to colors
             let pixels: Vec<egui::Color32> = self
                 .simulation
-                .particles_iter()
-                .map(|opt| match opt {
+                .cells_iter()
+                .map(|cell| match cell.get_particle() {
                     Some(p) => color_to_color32(p.get_color()),
                     None => bg,
                 })

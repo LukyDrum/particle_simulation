@@ -77,8 +77,8 @@ impl Particle for Spark {
         for_else!(
             for index in indexes => {
                 let off = OFFSETS[index];
-                if let Cell::Inside(opt) = neigborhood.on_relative(&off) {
-                    match opt {
+                if let Some(cell) = neigborhood.on_relative(&off) {
+                    match cell.get_particle() {
                         None => {
                             new_spark.movement = off;
                             break;
