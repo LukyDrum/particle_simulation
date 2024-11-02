@@ -1,6 +1,5 @@
+use crate::particles::constants::CELL_DEFAULT_PRESSURE;
 use crate::particles::Particle;
-
-const CELL_DEFAULT_PRESSURE: i32 = 0;
 
 #[derive(Clone)]
 pub struct Cell {
@@ -16,6 +15,10 @@ impl Cell {
         }
     }
 
+    pub fn default_pressure() -> i32 {
+        CELL_DEFAULT_PRESSURE
+    }
+
     pub fn is_empty(&self) -> bool {
         match self.particle {
             Some(_) => false,
@@ -29,6 +32,10 @@ impl Cell {
 
     pub fn set_particle(&mut self, new_particle: Box<dyn Particle>) -> () {
         self.particle = Some(new_particle)
+    }
+
+    pub fn set_particle_option(&mut self, new_particle_option: Option<Box<dyn Particle>>) -> () {
+        self.particle = new_particle_option
     }
 
     pub fn remove_particle(&mut self) -> () {

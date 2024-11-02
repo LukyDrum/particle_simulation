@@ -6,10 +6,15 @@ use std::collections::LinkedList;
 
 use crate::{
     offset::Offset,
-    particles::{Particle, ParticleChange},
+    particles::{constants::CELL_DEFAULT_PRESSURE, Particle, ParticleChange},
     sprite::Sprite,
     Cell, Neighborhood,
 };
+
+const UP: Offset = Offset { x: 0, y: -1 };
+const DOWN: Offset = Offset { x: 0, y: 1 };
+const LEFT: Offset = Offset { x: -1, y: 0 };
+const RIGHT: Offset = Offset { x: 1, y: 0 };
 
 pub struct SimInfo {
     pub particle_count: u32,
@@ -154,6 +159,14 @@ impl Simulation {
 }
 
 impl Simulation {
+    fn get_cell(&self, offset: &Offset) -> Option<&Cell> {
+        if !self.is_within(&offset) {
+            return None;
+        }
+
+        Some(&self.cells[self.offset_to_index(offset)])
+    }
+
     /// This will find the possible moves and store them in "self" using multiple threads. This method calls "find_moves".
     fn find_moves_multithreaded(&mut self) -> () {
         // Multithread finding of the moves and store it in self
@@ -261,14 +274,12 @@ impl Simulation {
                 }
                 // Switch particles on "to" and "with"
                 SimMove::Switch(with) => {
-                    // Switch particles while keeping pressures
-                    let new_to_pressure = self.cells[with].get_pressure();
-                    let new_with_pressure = self.cells[to].get_pressure();
+                    // Switch particles inside cells
+                    let to_particle = self.cells[to].get_particle().clone();
+                    let with_particle = self.cells[with].get_particle().clone();
 
-                    self.cells.swap(to, with);
-
-                    self.cells[to].set_pressure(new_to_pressure);
-                    self.cells[with].set_pressure(new_with_pressure);
+                    self.cells[to].set_particle_option(with_particle);
+                    self.cells[with].set_particle_option(to_particle);
                 }
             }
 
@@ -351,21 +362,15 @@ impl Simulation {
     }
 
     fn is_within(&self, offset: &Offset) -> bool {
-        offset.x >= 0
-            && offset.y >= 0
-            && offset.x < self.width as i32
-            && offset.y < self.height as i32
+        is_within(self.width, self.height, offset)
     }
 
     fn offset_to_index(&self, offset: &Offset) -> usize {
-        self.width * offset.y as usize + offset.x as usize
+        offset_to_index(self.width, offset)
     }
 
     fn index_to_offset(&self, index: usize) -> Offset {
-        let y = index / self.width;
-        let x = index - (y * self.width);
-
-        Offset::new(x as i32, y as i32)
+        index_to_offset(self.width, index)
     }
 
     fn get_neighborhood(&self, offset: Offset) -> Neighborhood {
@@ -386,4 +391,42 @@ impl Simulation {
 
         neigh
     }
+
+    fn calculate_pressure(&mut self) -> () {
+        let new_pressures = self.cells.iter().enumerate().map(|(index, cell)| {
+            // Reset pressure for empty cells
+            if cell.is_empty() {
+                return Cell::default_pressure();
+            }
+
+            let offset = index_to_offset(self.width, index);
+
+            let mut new_pressure = Cell::default_pressure();
+            // Look up
+            if let Some(cell) = self.get_cell(&(offset + UP)) {
+                if !cell.is_empty() {
+                    // Set new pressure to 1 greater than the one above me
+                    new_pressure = cell.get_pressure() + 1;
+                }
+            }
+
+            new_pressure
+        });
+    }
+}
+
+// To be used in case of mutable borrows
+fn is_within(width: usize, height: usize, offset: &Offset) -> bool {
+    offset.x >= 0 && offset.y >= 0 && offset.x < width as i32 && offset.y < height as i32
+}
+
+fn offset_to_index(width: usize, offset: &Offset) -> usize {
+    width * offset.y as usize + offset.x as usize
+}
+
+fn index_to_offset(width: usize, index: usize) -> Offset {
+    let y = index / width;
+    let x = index - (y * width);
+
+    Offset::new(x as i32, y as i32)
 }
