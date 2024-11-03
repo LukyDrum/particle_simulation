@@ -1,11 +1,11 @@
 use fastrand;
 
 use crate::particles::Particle;
-use crate::particles::{constants::*, NeighborCell, Vapor};
-use crate::{Color, Offset};
+use crate::particles::{constants::*, Vapor};
+use crate::{Cell, Color, Neighborhood, Offset};
 
 // use super::{Burnability, Neighborhood, ParticleChange, Vapor};
-use super::{Burnability, Neighborhood, ParticleChange};
+use super::{Burnability, MatterType, ParticleChange};
 
 const COLOR: u32 = 0x326ECF;
 const DENSITY: u8 = 128;
@@ -38,6 +38,10 @@ impl Particle for Water {
         &self.color
     }
 
+    fn get_matter_type(&self) -> &MatterType {
+        &MatterType::Liquid
+    }
+
     fn get_density(&self) -> u8 {
         DENSITY
     }
@@ -61,20 +65,32 @@ impl Particle for Water {
     fn update(&self, neigborhood: Neighborhood) -> ParticleChange {
         let mut new_water = self.clone();
 
-        let left = neigborhood.left();
-        let right = neigborhood.right();
-        // Check left and right for new x_dir and move away from obstacles
-        if left.is_some() || left.is_outside() {
-            new_water.x_dir = 1;
-        } else if right.is_some() || right.is_outside() {
-            new_water.x_dir = -1;
+        // Check in direction of x_dir for obstacels or out of bounds and move away from them
+        let in_x_dir = neigborhood.on_relative(&Offset::new(new_water.x_dir, 0));
+        if let Some(cell) = in_x_dir {
+            if let Some(_) = cell.get_particle() {
+                new_water.x_dir = -new_water.x_dir;
+            }
+        } else {
+            new_water.x_dir = -new_water.x_dir;
+        }
+
+        let pressure = match neigborhood.center() {
+            Some(cell) => cell.get_pressure(),
+            None => CELL_DEFAULT_PRESSURE,
+        };
+
+        if pressure != CELL_DEFAULT_PRESSURE {
+            let velocity = (pressure as f32 / 5.0).min(MAX_VELOCITY);
+            new_water.velocity = new_water.velocity.max(velocity);
+        } else {
         }
 
         // Find new movement
         for_else!(
             for off in [Offset::new(0, 1), Offset::new(new_water.x_dir, 0), Offset::new(-new_water.x_dir, 0)] => {
-                if let NeighborCell::Inside(opt) = neigborhood.on_relative(&off) {
-                    match opt {
+                if let Some(cell) = neigborhood.on_relative(&off) {
+                    match cell.get_particle() {
                         None => {
                             new_water.movement = off;
                             // Check if the movement is down and apply gravity
@@ -102,11 +118,13 @@ impl Particle for Water {
         // Check number of neighbors that are IsBurning and AntiBurn
         let mut count = 0;
         for opt in neigborhood.iter() {
-            if let NeighborCell::Inside(Some(neigh)) = opt {
-                match neigh.get_burnability() {
-                    Burnability::IsBurning(_) => count += 1,
-                    Burnability::AntiBurn => count -= 1,
-                    _ => {}
+            if let Some(cell) = opt {
+                if let Some(neigh) = cell.get_particle() {
+                    match neigh.get_burnability() {
+                        Burnability::IsBurning(_) => count += 1,
+                        Burnability::AntiBurn => count -= 1,
+                        _ => {}
+                    }
                 }
             }
         }

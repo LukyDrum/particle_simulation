@@ -3,7 +3,10 @@
 
 use eframe::egui;
 use particle_simulation::{
-    particles::{Fly, Mud, Oil, Particle, Rock, Sand, Smoke, Spark, Vapor, Water, Wood},
+    particles::{
+        constants::CELL_DEFAULT_PRESSURE, Fly, Mud, Oil, Particle, Rock, Sand, Smoke, Spark, Vapor,
+        Water, Wood,
+    },
     utility::get_offsets_for_square,
     Color, Offset, Simulation,
 };
@@ -11,6 +14,12 @@ use particle_simulation::{
 const SIM_WIDTH: usize = 200;
 const SIM_HEIGHT: usize = 200;
 const ZOOM: f32 = 3.0;
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum ViewMode {
+    Normal,
+    Pressure,
+}
 
 fn color_to_color32(c: &Color) -> egui::Color32 {
     egui::Color32::from_rgba_unmultiplied(c.r, c.g, c.b, c.a)
@@ -36,6 +45,7 @@ struct GUIParticleSim {
     selected_particle_index: usize,
     /// The resulting are will be this value squared
     brush_size: u32,
+    view_mode: ViewMode,
 }
 
 impl GUIParticleSim {
@@ -70,6 +80,7 @@ impl GUIParticleSim {
             preview_particles,
             selected_particle_index: 0,
             brush_size: 4,
+            view_mode: ViewMode::Normal,
         }
     }
 }
@@ -124,15 +135,31 @@ impl eframe::App for GUIParticleSim {
             });
 
             let bg = egui::Color32::LIGHT_BLUE;
-            // Map particles to colors
-            let pixels: Vec<egui::Color32> = self
-                .simulation
-                .particles_iter()
-                .map(|opt| match opt {
-                    Some(p) => color_to_color32(p.get_color()),
-                    None => bg,
-                })
-                .collect();
+
+            // Map simulation based on view mode
+            let pixels: Vec<egui::Color32> = match self.view_mode {
+                ViewMode::Normal => self
+                    .simulation
+                    .cells_iter()
+                    .map(|cell| match cell.get_particle() {
+                        Some(p) => color_to_color32(p.get_color()),
+                        None => bg,
+                    })
+                    .collect(),
+                ViewMode::Pressure => self
+                    .simulation
+                    .cells_iter()
+                    .map(|cell| {
+                        if !cell.is_empty() && cell.get_pressure() == CELL_DEFAULT_PRESSURE {
+                            egui::Color32::from_rgb(242, 242, 242)
+                        } else if !cell.is_empty() {
+                            egui::Color32::from_rgb((cell.get_pressure() * 3).min(255) as u8, 0, 0)
+                        } else {
+                            bg
+                        }
+                    })
+                    .collect(),
+            };
 
             // Draw pixels to texture
             self.texture.set(
@@ -162,6 +189,13 @@ impl eframe::App for GUIParticleSim {
                 // COLUMN 1
                 // Add brush size slider
                 cols[1].add(egui::Slider::new(&mut self.brush_size, 1..=20).text("Brush size"));
+
+                egui::ComboBox::from_label("View mode")
+                    .selected_text(format!("{:?}", self.view_mode))
+                    .show_ui(&mut cols[1], |ui| {
+                        ui.selectable_value(&mut self.view_mode, ViewMode::Normal, "Normal");
+                        ui.selectable_value(&mut self.view_mode, ViewMode::Pressure, "Pressure");
+                    });
 
                 // Add label for particles
                 cols[1].add(egui::Label::new("Particles"));

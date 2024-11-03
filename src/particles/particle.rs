@@ -1,9 +1,10 @@
 use dyn_clone::DynClone;
 
 use super::constants::MAX_DENSITY;
-use super::{constants::DEFAULT_VELOCITY, Burnability, Neighborhood};
+use super::{constants::DEFAULT_VELOCITY, Burnability};
 use crate::offset::Offset;
 use crate::Color;
+use crate::Neighborhood;
 
 /// Similiar to Option.
 /// Contains information if the particle has changed or not.
@@ -22,6 +23,13 @@ impl ParticleChange {
             ParticleChange::None => false,
         }
     }
+}
+
+#[derive(Clone, Copy)]
+pub enum MatterType {
+    Solid,
+    Liquid,
+    Gas,
 }
 
 // Needed for DynClone
@@ -43,6 +51,10 @@ pub trait Particle: Send + Sync + DynClone {
     /// Returns the color of the particle.
     fn get_color(&self) -> &Color;
 
+    /// Returns the matter type of this particle.
+    /// Either Solid, Liquid or Gas
+    fn get_matter_type(&self) -> &MatterType;
+
     /// Returns the density of this particle.
     /// The returned number is an 8bit unsigned integer (0-255).
     fn get_density(&self) -> u8;
@@ -62,7 +74,9 @@ pub trait Particle: Send + Sync + DynClone {
     /// This is the default implementation, can be overriden for custom behavior.
     fn can_switch_with(&self, other: &Box<dyn Particle>) -> bool {
         self.get_density() > other.get_density()
-            || (self.get_velocity() > DEFAULT_VELOCITY && !other.is_solid())
+            || (self.get_velocity() > DEFAULT_VELOCITY
+                && self.get_density() != other.get_density()
+                && !other.is_solid())
     }
 
     // PROPERTIES

@@ -1,9 +1,12 @@
+use crate::particles::constants::*;
 use crate::particles::Particle;
-use crate::particles::{constants::*, NeighborCell};
+use crate::Cell;
+use crate::Neighborhood;
 use crate::{Color, Offset};
 
 use super::properties::PropertyCheckResult;
-use super::{Burnability, Neighborhood, ParticleChange, Smoke};
+use super::MatterType;
+use super::{Burnability, ParticleChange, Smoke};
 
 const COLOR: u32 = 0x996E17;
 const DENSITY: u8 = 120;
@@ -39,6 +42,10 @@ impl Particle for Oil {
         &self.color
     }
 
+    fn get_matter_type(&self) -> &MatterType {
+        &MatterType::Liquid
+    }
+
     fn get_density(&self) -> u8 {
         DENSITY
     }
@@ -66,23 +73,21 @@ impl Particle for Oil {
     fn update(&self, neigborhood: Neighborhood) -> ParticleChange {
         let mut new_oil = self.clone();
 
-        let left = neigborhood.left();
-        let right = neigborhood.right();
-        // Check left and right for new x_dir and move away from obstacles
-        if left.is_some() && right.is_some() {
-            // Might be possible to switch
-            new_oil.x_dir = if fastrand::bool() { 1 } else { -1 };
-        } else if left.is_some() || left.is_outside() {
-            new_oil.x_dir = 1;
-        } else if right.is_some() || right.is_outside() {
-            new_oil.x_dir = -1;
+        // Check in direction of x_dir for obstacels or out of bounds and move away from them
+        let in_x_dir = neigborhood.on_relative(&Offset::new(new_oil.x_dir, 0));
+        if let Some(cell) = in_x_dir {
+            if let Some(_) = cell.get_particle() {
+                new_oil.x_dir = -new_oil.x_dir;
+            }
+        } else {
+            new_oil.x_dir = -new_oil.x_dir;
         }
 
         // Find new movement
         for_else!(
             for off in [Offset::new(0, 1), Offset::new(new_oil.x_dir, 0), Offset::new(-new_oil.x_dir, 0)] => {
-                if let NeighborCell::Inside(opt) = neigborhood.on_relative(&off) {
-                    match opt {
+                if let Some(cell) = neigborhood.on_relative(&off) {
+                    match cell.get_particle() {
                         None => {
                             new_oil.movement = off;
                             // Check if the movement is down and apply gravity

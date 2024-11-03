@@ -1,8 +1,8 @@
-use crate::particles::{NeighborCell, Particle};
+use crate::particles::Particle;
 use crate::utility::get_value_around;
-use crate::{Color, Offset};
+use crate::{Cell, Color, Neighborhood, Offset};
 
-use super::ParticleChange;
+use super::{MatterType, ParticleChange};
 
 const COLOR: u32 = 0xB1B6BD;
 const DENSITY: u8 = 20;
@@ -36,6 +36,10 @@ impl Particle for Smoke {
         &self.color
     }
 
+    fn get_matter_type(&self) -> &MatterType {
+        &MatterType::Gas
+    }
+
     fn get_density(&self) -> u8 {
         DENSITY
     }
@@ -48,7 +52,7 @@ impl Particle for Smoke {
         self.movement
     }
 
-    fn update(&self, neigborhood: super::Neighborhood) -> ParticleChange {
+    fn update(&self, neigborhood: Neighborhood) -> ParticleChange {
         // Lifetime reached 0 => smoke is gone
         if self.lifetime == 0 {
             return ParticleChange::Changed(None);
@@ -62,8 +66,8 @@ impl Particle for Smoke {
         // Find new movement
         for_else!(
             for off in [Offset::new(0, -1), Offset::new(x_dir, 0), Offset::new(-x_dir, 0)] => {
-                if let NeighborCell::Inside(opt) = neigborhood.on_relative(&off) {
-                    match opt {
+                if let Some(cell) = neigborhood.on_relative(&off) {
+                    match cell.get_particle() {
                         None => {
                             new_smoke.movement = off;
                             break;

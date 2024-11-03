@@ -1,11 +1,14 @@
+use crate::particles::constants::*;
 use crate::particles::Particle;
-use crate::particles::{constants::*, NeighborCell};
 use crate::utility::get_value_around;
+use crate::Cell;
+use crate::Neighborhood;
 use crate::{Color, Offset};
 use fastrand;
 
 use super::properties::PropertyCheckResult;
-use super::{Burnability, Neighborhood, ParticleChange};
+use super::MatterType;
+use super::{Burnability, ParticleChange};
 
 const COLOR: u32 = 0x152E02;
 /// Default lifetime in number of updates
@@ -54,6 +57,10 @@ impl Particle for Fly {
 
     fn get_color(&self) -> &Color {
         &self.color
+    }
+
+    fn get_matter_type(&self) -> &MatterType {
+        &MatterType::Solid
     }
 
     fn get_density(&self) -> u8 {
@@ -105,8 +112,8 @@ impl Particle for Fly {
             for_else!(
                 for index in indexes => {
                     let off = OFFSETS[index];
-                    if let NeighborCell::Inside(opt) = neigborhood.on_relative(&off) {
-                        match opt {
+                    if let Some(cell) = neigborhood.on_relative(&off) {
+                        match cell.get_particle() {
                             None => {
                                 new_fly.movement = off;
                                 new_fly.focus = get_value_around(FOCUS_TIME, FOCUS_TIME_OFFSET);

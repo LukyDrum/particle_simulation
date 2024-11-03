@@ -1,10 +1,13 @@
 use fastrand;
 
+use crate::particles::constants::*;
 use crate::particles::Particle;
-use crate::particles::{constants::*, NeighborCell};
+use crate::Cell;
+use crate::Neighborhood;
 use crate::{Color, Offset};
 
-use super::{Neighborhood, ParticleChange};
+use super::MatterType;
+use super::ParticleChange;
 
 const COLOR: u32 = 0xE0E02D;
 
@@ -34,6 +37,10 @@ impl Particle for Sand {
         &self.color
     }
 
+    fn get_matter_type(&self) -> &MatterType {
+        &MatterType::Solid
+    }
+
     fn get_density(&self) -> u8 {
         MAX_DENSITY
     }
@@ -57,8 +64,8 @@ impl Particle for Sand {
         let rand_x = if fastrand::bool() { 1 } else { -1 };
         for_else!(
             for off in [Offset::new(0, 1), Offset::new(-rand_x, 1), Offset::new(rand_x, 1)] => {
-                if let NeighborCell::Inside(opt) = neigborhood.on_relative(&off) {
-                    match opt {
+                if let Some(cell) = neigborhood.on_relative(&off) {
+                    match cell.get_particle() {
                         None => {
                             new_sand.movement = off;
                             // Check if the movement is down and apply gravity

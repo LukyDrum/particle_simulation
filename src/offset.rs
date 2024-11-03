@@ -1,6 +1,6 @@
 use std::ops;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Offset {
     pub x: i32,
     pub y: i32,
