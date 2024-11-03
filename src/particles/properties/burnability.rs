@@ -1,5 +1,5 @@
 use crate::particles::Particle;
-use crate::{Cell, Neighborhood};
+use crate::Neighborhood;
 
 use super::PropertyCheckResult;
 use fastrand;

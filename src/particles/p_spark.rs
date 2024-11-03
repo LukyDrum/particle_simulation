@@ -1,7 +1,6 @@
 use crate::particles::constants::*;
 use crate::particles::Particle;
 use crate::utility::get_value_around;
-use crate::Cell;
 use crate::Neighborhood;
 use crate::{Color, Offset};
 use fastrand;

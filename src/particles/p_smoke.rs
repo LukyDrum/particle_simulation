@@ -1,6 +1,6 @@
 use crate::particles::Particle;
 use crate::utility::get_value_around;
-use crate::{Cell, Color, Neighborhood, Offset};
+use crate::{Color, Neighborhood, Offset};
 
 use super::{MatterType, ParticleChange};
 

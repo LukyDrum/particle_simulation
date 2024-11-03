@@ -1,6 +1,5 @@
 use crate::particles::constants::*;
 use crate::particles::Particle;
-use crate::Cell;
 use crate::Neighborhood;
 use crate::{Color, Offset};
 

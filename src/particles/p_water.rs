@@ -2,7 +2,7 @@ use fastrand;
 
 use crate::particles::Particle;
 use crate::particles::{constants::*, Vapor};
-use crate::{Cell, Color, Neighborhood, Offset};
+use crate::{Color, Neighborhood, Offset};
 
 // use super::{Burnability, Neighborhood, ParticleChange, Vapor};
 use super::{Burnability, MatterType, ParticleChange};
