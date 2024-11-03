@@ -5,7 +5,7 @@ use crate::particles::{constants::*, Vapor};
 use crate::{Cell, Color, Neighborhood, Offset};
 
 // use super::{Burnability, Neighborhood, ParticleChange, Vapor};
-use super::{Burnability, ParticleChange};
+use super::{Burnability, MatterType, ParticleChange};
 
 const COLOR: u32 = 0x326ECF;
 const DENSITY: u8 = 128;
@@ -36,6 +36,10 @@ impl Particle for Water {
 
     fn get_color(&self) -> &Color {
         &self.color
+    }
+
+    fn get_matter_type(&self) -> &MatterType {
+        &MatterType::Liquid
     }
 
     fn get_density(&self) -> u8 {

@@ -25,6 +25,13 @@ impl ParticleChange {
     }
 }
 
+#[derive(Clone, Copy)]
+pub enum MatterType {
+    Solid,
+    Liquid,
+    Gas,
+}
+
 // Needed for DynClone
 dyn_clone::clone_trait_object!(Particle);
 
@@ -43,6 +50,10 @@ pub trait Particle: Send + Sync + DynClone {
 
     /// Returns the color of the particle.
     fn get_color(&self) -> &Color;
+
+    /// Returns the matter type of this particle.
+    /// Either Solid, Liquid or Gas
+    fn get_matter_type(&self) -> &MatterType;
 
     /// Returns the density of this particle.
     /// The returned number is an 8bit unsigned integer (0-255).

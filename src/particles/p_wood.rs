@@ -3,6 +3,7 @@ use crate::particles::Particle;
 use crate::Neighborhood;
 use crate::{Color, Offset};
 
+use super::particle::MatterType;
 use super::properties::PropertyCheckResult;
 use super::{Burnability, ParticleChange};
 
@@ -70,5 +71,9 @@ impl Particle for Wood {
             PropertyCheckResult::Destroyed => ParticleChange::Changed(None),
             PropertyCheckResult::None => ParticleChange::None,
         }
+    }
+
+    fn get_matter_type(&self) -> &MatterType {
+        &MatterType::Solid
     }
 }

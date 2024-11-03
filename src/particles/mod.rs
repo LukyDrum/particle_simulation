@@ -23,5 +23,5 @@ pub use p_spark::Spark;
 pub use p_vapor::Vapor;
 pub use p_water::Water;
 pub use p_wood::Wood;
-pub use particle::{Particle, ParticleChange};
+pub use particle::{MatterType, Particle, ParticleChange};
 pub use properties::Burnability;
