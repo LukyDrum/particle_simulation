@@ -7,7 +7,7 @@ use std::collections::LinkedList;
 use crate::{
     area::Area,
     offset::Offset,
-    particles::{constants::CELL_DEFAULT_PRESSURE, Particle, ParticleChange},
+    particles::{constants::CELL_DEFAULT_PRESSURE, MatterType, Particle, ParticleChange},
     sprite::Sprite,
     Cell, Neighborhood,
 };
@@ -401,21 +401,23 @@ impl Simulation {
         }
 
         // Optimization step:
-        // Filter cells that contain a particle and map them to their indexes
+        // Filter cells that contain a liquid particle and map them to their indexes
         let cell_indexes: FxHashSet<usize> = self
             .cells
             .iter()
             .enumerate()
-            .filter_map(
-                |(index, cell)| {
-                    if !cell.is_empty() {
-                        Some(index)
-                    } else {
-                        None
-                    }
+            .filter_map(|(index, cell)| match cell.get_particle() {
+                None => None,
+                Some(p) => match p.get_matter_type() {
+                    MatterType::Liquid => Some(index),
+                    _ => None,
                 },
-            )
+            })
             .collect();
+
+        if cell_indexes.is_empty() {
+            return;
+        }
 
         let mut visited: FxHashSet<usize> = FxHashSet::default();
         let mut areas: LinkedList<Area> = LinkedList::new();
