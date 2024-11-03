@@ -490,6 +490,23 @@ impl Simulation {
                 self.cells[*index].set_pressure(max_pressure);
             }
         }
+
+        // Step 3:
+        // Spread pressure upwards if it is more than 1 higher
+        for index in pressure_cell_indexes.iter().rev() {
+            let index = *index;
+            let offset = self.index_to_offset(index);
+            let bellow = offset + DOWN;
+            let pressure_bellow = if let Some(cell) = self.get_cell(&bellow) {
+                cell.get_pressure()
+            } else {
+                CELL_DEFAULT_PRESSURE
+            };
+
+            if pressure_bellow - 1 > self.cells[index].get_pressure() {
+                self.cells[index].set_pressure(pressure_bellow - 1);
+            }
+        }
     }
 }
 
