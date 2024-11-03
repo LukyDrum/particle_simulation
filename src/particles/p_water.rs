@@ -75,6 +75,17 @@ impl Particle for Water {
             new_water.x_dir = -new_water.x_dir;
         }
 
+        let pressure = match neigborhood.center() {
+            Some(cell) => cell.get_pressure(),
+            None => CELL_DEFAULT_PRESSURE,
+        };
+
+        if pressure != CELL_DEFAULT_PRESSURE {
+            let velocity = (pressure as f32 / 5.0).min(MAX_VELOCITY);
+            new_water.velocity = new_water.velocity.max(velocity);
+        } else {
+        }
+
         // Find new movement
         for_else!(
             for off in [Offset::new(0, 1), Offset::new(new_water.x_dir, 0), Offset::new(-new_water.x_dir, 0)] => {

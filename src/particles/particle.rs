@@ -74,7 +74,9 @@ pub trait Particle: Send + Sync + DynClone {
     /// This is the default implementation, can be overriden for custom behavior.
     fn can_switch_with(&self, other: &Box<dyn Particle>) -> bool {
         self.get_density() > other.get_density()
-            || (self.get_velocity() > DEFAULT_VELOCITY && !other.is_solid())
+            || (self.get_velocity() > DEFAULT_VELOCITY
+                && self.get_density() != other.get_density()
+                && !other.is_solid())
     }
 
     // PROPERTIES
