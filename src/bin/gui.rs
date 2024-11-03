@@ -152,10 +152,8 @@ impl eframe::App for GUIParticleSim {
                     .map(|cell| {
                         if !cell.is_empty() && cell.get_pressure() == CELL_DEFAULT_PRESSURE {
                             egui::Color32::from_rgb(242, 242, 242)
-                        } else if !cell.is_empty() {
-                            egui::Color32::from_rgb((cell.get_pressure() * 3).min(255) as u8, 0, 0)
                         } else {
-                            bg
+                            egui::Color32::from_rgb((cell.get_pressure() * 3).min(255) as u8, 0, 0)
                         }
                     })
                     .collect(),
