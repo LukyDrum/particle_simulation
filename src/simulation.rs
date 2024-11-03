@@ -1,7 +1,7 @@
 use dyn_clone::clone_box;
 use fastrand;
 use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use std::collections::LinkedList;
 
 use crate::{
@@ -403,7 +403,7 @@ impl Simulation {
 
         // Optimization step:
         // Filter cells that contain a particle and map them to their indexes
-        let full_cells_indexes: LinkedList<usize> = self
+        let pressure_cell_indexes: LinkedList<usize> = self
             .cells
             .iter()
             .enumerate()
@@ -418,9 +418,9 @@ impl Simulation {
             )
             .collect();
 
-        // Step: 1
+        // Step 1:
         // Set pressure equal to the height of occupied cells above them
-        for index in &full_cells_indexes {
+        for index in &pressure_cell_indexes {
             let index = *index;
             let offset = self.index_to_offset(index);
             let above = offset + UP;
@@ -431,6 +431,64 @@ impl Simulation {
             };
 
             self.cells[index].set_pressure(pressure_above + 1);
+        }
+
+        // Step 2:
+        // Spread pressure to sides
+        let mut checked_rows: FxHashSet<usize> = FxHashSet::default();
+        // A partion is a continues strip of pressure simulated cells in a row. (Represented by their indexes)
+        let mut partions: LinkedList<LinkedList<usize>> = LinkedList::new();
+        for index in &pressure_cell_indexes {
+            let index = *index;
+            // The row of this index
+            let row = index / self.width;
+            // If row already checked then continue
+            if checked_rows.contains(&row) {
+                continue;
+            }
+
+            let row_start_index = row * self.width;
+
+            let mut cur_partion: LinkedList<usize> = LinkedList::new();
+            let mut in_partion;
+            for index in row_start_index..(row_start_index + self.width) {
+                if !self.cells[index].is_empty() {
+                    in_partion = true;
+                    cur_partion.push_back(index);
+                } else {
+                    in_partion = false;
+                }
+
+                if !in_partion && !cur_partion.is_empty() {
+                    partions.push_back(cur_partion);
+                    cur_partion = LinkedList::new();
+                }
+            }
+
+            // If there is anything left in current partion, then push the partion to partions
+            if !cur_partion.is_empty() {
+                partions.push_back(cur_partion);
+            }
+
+            // Add row to checked rows
+            checked_rows.insert(row);
+        }
+
+        // Set pressure of each cell in each partion to the maximum of the pressures in that partions
+        for partion in &partions {
+            let max_pressure = partion
+                .iter()
+                .map(|index| self.cells[*index].get_pressure())
+                .max();
+            let max_pressure = match max_pressure {
+                Some(val) => val,
+                None => CELL_DEFAULT_PRESSURE,
+            };
+
+            // Set pressure of all those cells to max_pressure
+            for index in partion {
+                self.cells[*index].set_pressure(max_pressure);
+            }
         }
     }
 }
