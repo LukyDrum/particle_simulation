@@ -463,6 +463,7 @@ impl Simulation {
             areas.push_back(area);
         }
 
+        // For each cell in each area apply it the pressure as a depth
         for area in areas {
             for offset in area.iter() {
                 let index = self.offset_to_index(offset);
