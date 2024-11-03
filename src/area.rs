@@ -1,8 +1,9 @@
-use std::i32;
+use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
+use std::{collections::LinkedList, i32};
 
 use rustc_hash::FxHashSet;
 
-use crate::Offset;
+use crate::{particles::constants::UP, Offset};
 
 /// A collection of Offsets where they form a continuoes plane.
 pub struct Area {
@@ -40,5 +41,19 @@ impl Area {
 
     pub fn depth(&self, offset: &Offset) -> i32 {
         offset.y - self.highest_point
+    }
+
+    pub fn get_heighest_offsets(&self) -> LinkedList<&Offset> {
+        self.offsets
+            .par_iter()
+            .filter(|off| off.y == self.highest_point)
+            .collect()
+    }
+
+    pub fn get_top_edge_offsets(&self) -> LinkedList<&Offset> {
+        self.offsets
+            .par_iter()
+            .filter(|off| !self.offsets.contains(&(**off + UP)))
+            .collect()
     }
 }

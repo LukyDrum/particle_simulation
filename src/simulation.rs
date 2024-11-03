@@ -2,20 +2,15 @@ use dyn_clone::clone_box;
 use fastrand;
 use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use rustc_hash::{FxHashMap, FxHashSet};
-use std::collections::LinkedList;
+use std::{collections::LinkedList, iter::zip};
 
 use crate::{
     area::Area,
     offset::Offset,
-    particles::{constants::CELL_DEFAULT_PRESSURE, MatterType, Particle, ParticleChange},
+    particles::{constants::*, MatterType, Particle, ParticleChange},
     sprite::Sprite,
     Cell, Neighborhood,
 };
-
-const UP: Offset = Offset { x: 0, y: -1 };
-const DOWN: Offset = Offset { x: 0, y: 1 };
-const LEFT: Offset = Offset { x: -1, y: 0 };
-const RIGHT: Offset = Offset { x: 1, y: 0 };
 
 pub struct SimInfo {
     pub particle_count: u32,
@@ -465,11 +460,44 @@ impl Simulation {
 
         // For each cell in each area apply it the pressure as a depth
         for area in areas {
+            // Set pressure of each cell
             for offset in area.iter() {
                 let index = self.offset_to_index(offset);
                 let depth = area.depth(offset);
 
                 self.cells[index].set_pressure(depth);
+            }
+
+            let heighest_offsets = area.get_heighest_offsets();
+            let teleport_positions: LinkedList<Offset> = area
+                .get_top_edge_offsets()
+                .par_iter()
+                .filter_map(|off| {
+                    let above = **off + UP;
+                    let index = self.offset_to_index(off);
+                    let pressure = self.cells[index].get_pressure();
+                    match self.get_cell(&above) {
+                        None => None,
+                        Some(cell) => {
+                            if cell.is_empty() && pressure > CELL_PRESSURE_DIFF {
+                                Some(above)
+                            } else {
+                                None
+                            }
+                        }
+                    }
+                })
+                .collect();
+
+            for (from, to) in zip(heighest_offsets, teleport_positions) {
+                let from_index = self.offset_to_index(from);
+                let to_index = self.offset_to_index(&to);
+
+                if let Some(p) = self.cells[from_index].get_particle() {
+                    let p = *clone_box(p);
+                    self.cells[to_index].set_particle(p);
+                    self.cells[from_index].set_particle_option(None);
+                }
             }
         }
     }
