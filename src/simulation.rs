@@ -430,7 +430,9 @@ impl Simulation {
                 CELL_DEFAULT_PRESSURE
             };
 
-            self.cells[index].set_pressure(pressure_above + 1);
+            if pressure_above + 1 > self.cells[index].get_pressure() {
+                self.cells[index].set_pressure(pressure_above + 1);
+            }
         }
 
         // Step 2:
@@ -487,7 +489,9 @@ impl Simulation {
 
             // Set pressure of all those cells to max_pressure
             for index in partion {
-                self.cells[*index].set_pressure(max_pressure);
+                if max_pressure > self.cells[*index].get_pressure() {
+                    self.cells[*index].set_pressure(max_pressure);
+                }
             }
         }
 
