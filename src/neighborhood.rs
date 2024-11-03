@@ -37,6 +37,10 @@ impl<'a> Neighborhood<'a> {
         &self.0[2][2]
     }
 
+    pub fn center(&self) -> &Option<&Cell> {
+        &self.0[1][1]
+    }
+
     /// Returns the Option on the `offset` relative to the center of neighborhood.
     pub fn on_relative(&self, offset: &Offset) -> &Option<&Cell> {
         &self.0[(1 + offset.y) as usize][(1 + offset.x) as usize]

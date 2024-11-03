@@ -3,7 +3,10 @@
 
 use eframe::egui;
 use particle_simulation::{
-    particles::{Fly, Mud, Oil, Particle, Rock, Sand, Smoke, Spark, Vapor, Water, Wood},
+    particles::{
+        constants::CELL_DEFAULT_PRESSURE, Fly, Mud, Oil, Particle, Rock, Sand, Smoke, Spark, Vapor,
+        Water, Wood,
+    },
     utility::get_offsets_for_square,
     Color, Offset, Simulation,
 };
@@ -147,7 +150,13 @@ impl eframe::App for GUIParticleSim {
                     .simulation
                     .cells_iter()
                     .map(|cell| {
-                        egui::Color32::from_rgb((cell.get_pressure() * 3).min(255) as u8, 0, 0)
+                        if !cell.is_empty() && cell.get_pressure() == CELL_DEFAULT_PRESSURE {
+                            egui::Color32::from_rgb(242, 242, 242)
+                        } else if !cell.is_empty() {
+                            egui::Color32::from_rgb((cell.get_pressure() * 3).min(255) as u8, 0, 0)
+                        } else {
+                            bg
+                        }
                     })
                     .collect(),
             };

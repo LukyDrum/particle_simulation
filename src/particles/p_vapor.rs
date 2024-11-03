@@ -2,7 +2,7 @@ use crate::particles::Particle;
 use crate::utility::get_value_around;
 use crate::{Cell, Color, Neighborhood, Offset};
 
-use super::{ParticleChange, Water};
+use super::{MatterType, ParticleChange, Water};
 
 const COLOR: u32 = 0xE3E3E3;
 const DENSITY: u8 = 16;
@@ -34,6 +34,10 @@ impl Particle for Vapor {
 
     fn get_color(&self) -> &Color {
         &self.color
+    }
+
+    fn get_matter_type(&self) -> &MatterType {
+        &MatterType::Gas
     }
 
     fn get_density(&self) -> u8 {

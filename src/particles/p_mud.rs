@@ -5,6 +5,7 @@ use crate::Cell;
 use crate::Neighborhood;
 use crate::{Color, Offset};
 
+use super::MatterType;
 use super::ParticleChange;
 
 const COLOR: u32 = 0x91473D;
@@ -38,6 +39,10 @@ impl Particle for Mud {
 
     fn get_color(&self) -> &Color {
         &self.color
+    }
+
+    fn get_matter_type(&self) -> &MatterType {
+        &MatterType::Solid
     }
 
     fn get_density(&self) -> u8 {

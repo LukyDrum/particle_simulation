@@ -7,6 +7,7 @@ use crate::{Color, Offset};
 use fastrand;
 
 use super::properties::PropertyCheckResult;
+use super::MatterType;
 use super::{Burnability, ParticleChange};
 
 const COLOR: u32 = FIRE_COLOR;
@@ -43,6 +44,10 @@ impl Particle for Spark {
 
     fn get_color(&self) -> &Color {
         &self.color
+    }
+
+    fn get_matter_type(&self) -> &MatterType {
+        &MatterType::Solid
     }
 
     fn get_density(&self) -> u8 {

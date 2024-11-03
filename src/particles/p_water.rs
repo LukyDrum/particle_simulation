@@ -5,7 +5,7 @@ use crate::particles::{constants::*, Vapor};
 use crate::{Cell, Color, Neighborhood, Offset};
 
 // use super::{Burnability, Neighborhood, ParticleChange, Vapor};
-use super::{Burnability, ParticleChange};
+use super::{Burnability, MatterType, ParticleChange};
 
 const COLOR: u32 = 0x326ECF;
 const DENSITY: u8 = 128;
@@ -36,6 +36,10 @@ impl Particle for Water {
 
     fn get_color(&self) -> &Color {
         &self.color
+    }
+
+    fn get_matter_type(&self) -> &MatterType {
+        &MatterType::Liquid
     }
 
     fn get_density(&self) -> u8 {
@@ -69,6 +73,17 @@ impl Particle for Water {
             }
         } else {
             new_water.x_dir = -new_water.x_dir;
+        }
+
+        let pressure = match neigborhood.center() {
+            Some(cell) => cell.get_pressure(),
+            None => CELL_DEFAULT_PRESSURE,
+        };
+
+        if pressure != CELL_DEFAULT_PRESSURE {
+            let velocity = (pressure as f32 / 5.0).min(MAX_VELOCITY);
+            new_water.velocity = new_water.velocity.max(velocity);
+        } else {
         }
 
         // Find new movement

@@ -1,6 +1,7 @@
 // MODS
 #[macro_use]
 pub mod utility;
+mod area;
 mod cell;
 mod color;
 mod neighborhood;

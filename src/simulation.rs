@@ -2,19 +2,15 @@ use dyn_clone::clone_box;
 use fastrand;
 use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use rustc_hash::{FxHashMap, FxHashSet};
-use std::collections::LinkedList;
+use std::{collections::LinkedList, iter::zip};
 
 use crate::{
+    area::Area,
     offset::Offset,
-    particles::{constants::CELL_DEFAULT_PRESSURE, Particle, ParticleChange},
+    particles::{constants::*, MatterType, Particle, ParticleChange},
     sprite::Sprite,
     Cell, Neighborhood,
 };
-
-const UP: Offset = Offset { x: 0, y: -1 };
-const DOWN: Offset = Offset { x: 0, y: 1 };
-const LEFT: Offset = Offset { x: -1, y: 0 };
-const RIGHT: Offset = Offset { x: 1, y: 0 };
 
 pub struct SimInfo {
     pub particle_count: u32,
@@ -395,120 +391,113 @@ impl Simulation {
     }
 
     fn calculate_pressure(&mut self) -> () {
-        // Step 0:
-        // Reset pressure values in cells
         for cell in &mut self.cells {
             cell.set_pressure(CELL_DEFAULT_PRESSURE);
         }
 
         // Optimization step:
-        // Filter cells that contain a particle and map them to their indexes
-        let pressure_cell_indexes: LinkedList<usize> = self
+        // Filter cells that contain a liquid particle and map them to their indexes
+        let cell_indexes: FxHashSet<usize> = self
             .cells
             .iter()
             .enumerate()
-            .filter_map(
-                |(index, cell)| {
-                    if !cell.is_empty() {
-                        Some(index)
-                    } else {
-                        None
-                    }
+            .filter_map(|(index, cell)| match cell.get_particle() {
+                None => None,
+                Some(p) => match p.get_matter_type() {
+                    MatterType::Liquid => Some(index),
+                    _ => None,
                 },
-            )
+            })
             .collect();
 
-        // Step 1:
-        // Set pressure equal to the height of occupied cells above them
-        for index in &pressure_cell_indexes {
-            let index = *index;
-            let offset = self.index_to_offset(index);
-            let above = offset + UP;
-            let pressure_above = if let Some(cell) = self.get_cell(&above) {
-                cell.get_pressure()
-            } else {
-                CELL_DEFAULT_PRESSURE
-            };
-
-            if pressure_above + 1 > self.cells[index].get_pressure() {
-                self.cells[index].set_pressure(pressure_above + 1);
-            }
+        if cell_indexes.is_empty() {
+            return;
         }
 
-        // Step 2:
-        // Spread pressure to sides
-        let mut checked_rows: FxHashSet<usize> = FxHashSet::default();
-        // A partion is a continues strip of pressure simulated cells in a row. (Represented by their indexes)
-        let mut partions: LinkedList<LinkedList<usize>> = LinkedList::new();
-        for index in &pressure_cell_indexes {
-            let index = *index;
-            // The row of this index
-            let row = index / self.width;
-            // If row already checked then continue
-            if checked_rows.contains(&row) {
+        let mut visited: FxHashSet<usize> = FxHashSet::default();
+        let mut areas: LinkedList<Area> = LinkedList::new();
+        // Loop over each cell index and try to run BFS to search for it's area
+        for index in &cell_indexes {
+            if visited.contains(index) {
                 continue;
             }
 
-            let row_start_index = row * self.width;
+            let offset = self.index_to_offset(*index);
 
-            let mut cur_partion: LinkedList<usize> = LinkedList::new();
-            let mut in_partion;
-            for index in row_start_index..(row_start_index + self.width) {
-                if !self.cells[index].is_empty() {
-                    in_partion = true;
-                    cur_partion.push_back(index);
-                } else {
-                    in_partion = false;
-                }
+            let mut area = Area::new();
+            // BFS
+            // Init
+            let mut queue: LinkedList<Offset> = LinkedList::new();
+            queue.push_back(offset);
+            visited.insert(*index);
+            // Loop
+            while !queue.is_empty() {
+                let opt = queue.pop_front();
+                if let Some(cur) = opt {
+                    // Loop for each side
+                    for off in [UP, DOWN, LEFT, RIGHT] {
+                        let next = cur + off;
+                        // Skip if out of bounds
+                        if !self.is_within(&next) {
+                            continue;
+                        }
+                        let next_index = self.offset_to_index(&next);
 
-                if !in_partion && !cur_partion.is_empty() {
-                    partions.push_back(cur_partion);
-                    cur_partion = LinkedList::new();
+                        // Check if the index is in pressure-active cells and not visited
+                        if cell_indexes.contains(&next_index) && !visited.contains(&next_index) {
+                            visited.insert(next_index);
+                            queue.push_back(next);
+                        }
+                    }
+
+                    // Add offset to area
+                    area.add(cur);
                 }
             }
 
-            // If there is anything left in current partion, then push the partion to partions
-            if !cur_partion.is_empty() {
-                partions.push_back(cur_partion);
-            }
-
-            // Add row to checked rows
-            checked_rows.insert(row);
+            areas.push_back(area);
         }
 
-        // Set pressure of each cell in each partion to the maximum of the pressures in that partions
-        for partion in &partions {
-            let max_pressure = partion
-                .iter()
-                .map(|index| self.cells[*index].get_pressure())
-                .max();
-            let max_pressure = match max_pressure {
-                Some(val) => val,
-                None => CELL_DEFAULT_PRESSURE,
-            };
+        // For each cell in each area apply it the pressure as a depth
+        for area in areas {
+            // Set pressure of each cell
+            for offset in area.iter() {
+                let index = self.offset_to_index(offset);
+                let depth = area.depth(offset);
 
-            // Set pressure of all those cells to max_pressure
-            for index in partion {
-                if max_pressure > self.cells[*index].get_pressure() {
-                    self.cells[*index].set_pressure(max_pressure);
-                }
+                self.cells[index].set_pressure(depth);
             }
-        }
 
-        // Step 3:
-        // Spread pressure upwards if it is more than 1 higher
-        for index in pressure_cell_indexes.iter().rev() {
-            let index = *index;
-            let offset = self.index_to_offset(index);
-            let bellow = offset + DOWN;
-            let pressure_bellow = if let Some(cell) = self.get_cell(&bellow) {
-                cell.get_pressure()
-            } else {
-                CELL_DEFAULT_PRESSURE
-            };
+            let heighest_offsets = area.get_heighest_offsets();
+            let teleport_positions: LinkedList<Offset> = area
+                .get_top_edge_offsets()
+                .par_iter()
+                .filter_map(|off| {
+                    let above = **off + UP;
+                    let index = self.offset_to_index(off);
+                    let pressure = self.cells[index].get_pressure();
+                    match self.get_cell(&above) {
+                        None => None,
+                        Some(cell) => {
+                            if cell.is_empty() && pressure > CELL_PRESSURE_DIFF {
+                                Some(above)
+                            } else {
+                                None
+                            }
+                        }
+                    }
+                })
+                .collect();
 
-            if pressure_bellow - 1 > self.cells[index].get_pressure() {
-                self.cells[index].set_pressure(pressure_bellow - 1);
+            for (from, to) in zip(heighest_offsets, teleport_positions) {
+                let from_index = self.offset_to_index(from);
+                let to_index = self.offset_to_index(&to);
+
+                if let Some(p) = self.cells[from_index].get_particle() {
+                    let p = *clone_box(p);
+                    self.cells[to_index].set_particle(p);
+                    self.cells[from_index].set_particle_option(None);
+                }
             }
         }
     }

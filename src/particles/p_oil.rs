@@ -5,6 +5,7 @@ use crate::Neighborhood;
 use crate::{Color, Offset};
 
 use super::properties::PropertyCheckResult;
+use super::MatterType;
 use super::{Burnability, ParticleChange, Smoke};
 
 const COLOR: u32 = 0x996E17;
@@ -39,6 +40,10 @@ impl Particle for Oil {
 
     fn get_color(&self) -> &Color {
         &self.color
+    }
+
+    fn get_matter_type(&self) -> &MatterType {
+        &MatterType::Liquid
     }
 
     fn get_density(&self) -> u8 {
