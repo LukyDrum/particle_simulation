@@ -49,10 +49,4 @@ impl Cell {
     pub fn set_pressure(&mut self, new_pressure: i32) -> () {
         self.pressure = new_pressure
     }
-
-    pub fn switch_with(&mut self, other: &mut Cell) -> () {
-        let other_particle = other.get_particle().clone();
-        other.particle = self.particle.clone();
-        self.particle = other_particle;
-    }
 }

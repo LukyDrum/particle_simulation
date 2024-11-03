@@ -395,49 +395,42 @@ impl Simulation {
     }
 
     fn calculate_pressure(&mut self) -> () {
-        let new_pressures: LinkedList<i32> = self
+        // Step 0:
+        // Reset pressure values in cells
+        for cell in &mut self.cells {
+            cell.set_pressure(CELL_DEFAULT_PRESSURE);
+        }
+
+        // Optimization step:
+        // Filter cells that contain a particle and map them to their indexes
+        let full_cells_indexes: LinkedList<usize> = self
             .cells
-            .par_iter()
+            .iter()
             .enumerate()
-            .map(|(index, cell)| {
-                // Reset pressure for empty cells
-                if cell.is_empty() {
-                    return Cell::default_pressure();
-                }
-
-                let offset = index_to_offset(self.width, index);
-
-                let mut new_pressure = Cell::default_pressure();
-                // Look up
-                if let Some(cell) = self.get_cell(&(offset + UP)) {
+            .filter_map(
+                |(index, cell)| {
                     if !cell.is_empty() {
-                        // Set new pressure to 1 greater than the one above me
-                        new_pressure = cell.get_pressure() + 1;
+                        Some(index)
+                    } else {
+                        None
                     }
-                }
-
-                // Look left
-                if let Some(cell) = self.get_cell(&(offset + LEFT)) {
-                    if !cell.is_empty() {
-                        // Set the pressure to the max of this and neighbor cell
-                        new_pressure = new_pressure.max(cell.get_pressure());
-                    }
-                }
-
-                // Look right
-                if let Some(cell) = self.get_cell(&(offset + RIGHT)) {
-                    if !cell.is_empty() {
-                        // Set the pressure to the max of this and neighbor cell
-                        new_pressure = new_pressure.max(cell.get_pressure());
-                    }
-                }
-
-                new_pressure
-            })
+                },
+            )
             .collect();
 
-        for (index, pressure) in new_pressures.iter().enumerate() {
-            self.cells[index].set_pressure(*pressure);
+        // Step: 1
+        // Set pressure equal to the height of occupied cells above them
+        for index in &full_cells_indexes {
+            let index = *index;
+            let offset = self.index_to_offset(index);
+            let above = offset + UP;
+            let pressure_above = if let Some(cell) = self.get_cell(&above) {
+                cell.get_pressure()
+            } else {
+                CELL_DEFAULT_PRESSURE
+            };
+
+            self.cells[index].set_pressure(pressure_above + 1);
         }
     }
 }
